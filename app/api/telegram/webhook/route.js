@@ -33,10 +33,23 @@ export async function POST(request) {
     );
   }
 
-  const body = await request.json();
-  const result = await handleTelegramWebhookUpdate(body);
+  try {
+    const body = await request.json();
+    const result = await handleTelegramWebhookUpdate(body);
 
-  return NextResponse.json(result, {
-    status: 200
-  });
+    return NextResponse.json(result, {
+      status: 200
+    });
+  } catch (error) {
+    console.warn("Telegram webhook handler failed:", error.message);
+
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Webhook обработан с ошибкой",
+        error: error.message
+      },
+      { status: 200 }
+    );
+  }
 }
