@@ -123,9 +123,41 @@ npm run telegram:webhook:delete
 - `/alerts`
 - `/appointments`
 
+### Боевая рассылка и расписание
+
+Есть 2 режима dispatch:
+
+- `daily` — утренняя сводка по ролям
+- `control` — контрольные сообщения по возвратам, срочным сделкам и ближайшим замерам
+
+Ручные вызовы:
+
+```powershell
+Invoke-WebRequest "https://mebel-rdn.vercel.app/api/telegram/dispatch?dryRun=1&mode=daily"
+Invoke-WebRequest "https://mebel-rdn.vercel.app/api/telegram/dispatch?dryRun=0&mode=control&force=1"
+```
+
+Защищённые cron endpoints:
+
+- `/api/telegram/cron/daily`
+- `/api/telegram/cron/control`
+- `/api/telegram/cron/director-control`
+- `/api/telegram/cron/manager-control`
+- `/api/telegram/cron/measurer-control`
+
+В `vercel.json` уже добавлен безопасный ежедневный cron на `/api/telegram/cron/daily`
+с запуском в `04:00 UTC` — это около `09:00` по `Asia/Almaty`.
+
+Если в проекте задан `CRON_SECRET`, Vercel сам отправляет его в заголовке `Authorization`
+для cron job. Если `CRON_SECRET` ещё не задан, route в проде временно принимает только
+запросы с user-agent `vercel-cron/1.0`.
+
+Для частых напоминаний по возвратам и замерам логично дальше вешать внешний scheduler
+или Vercel Pro на `/api/telegram/cron/control`.
+
 ## Что логично делать дальше
 
 - перевести Telegram-привязки с mock-store на live users/conversations
 - дать директору и менеджерам реальные chat id и рабочую регистрацию
 - после публичного деплоя включить настоящий webhook
-- затем добавить расписание dispatch через cron, n8n или Vercel job
+- затем повесить частый `control`-scheduler через cron, n8n или Vercel job

@@ -16,6 +16,8 @@ export async function GET(request) {
   const searchParams = request.nextUrl.searchParams;
   const result = await runTelegramDispatch({
     dryRun: parseBooleanFlag(searchParams.get("dryRun"), true),
+    force: parseBooleanFlag(searchParams.get("force"), false),
+    mode: searchParams.get("mode"),
     role: searchParams.get("role"),
     chatId: searchParams.get("chatId")
   });
@@ -30,6 +32,8 @@ export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const result = await runTelegramDispatch({
     dryRun: body?.dryRun !== false,
+    force: body?.force === true,
+    mode: body?.mode || null,
     role: body?.role || null,
     chatId: body?.chatId || null
   });
