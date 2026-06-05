@@ -1,0 +1,25 @@
+{
+  "name": "mebel-rdn-crm",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "check:system": "node scripts/check-system.mjs",
+    "bootstrap:live-db": "node scripts/bootstrap-live-db.mjs",
+    "telegram:poll-once": "node scripts/telegram-poll-once.mjs",
+    "telegram:poll-loop": "node scripts/telegram-poll-loop.mjs",
+    "telegram:webhook:info": "node scripts/telegram-webhook.mjs info",
+    "telegram:webhook:set": "node scripts/telegram-webhook.mjs set",
+    "telegram:webhook:delete": "node scripts/telegram-webhook.mjs delete",
+    "telegram:me": "node scripts/telegram-webhook.mjs me",
+    "telegram:commands:set": "node scripts/telegram-webhook.mjs commands"
+  },
+  "dependencies": {
+    "next": "^15.3.2",
+    "pg": "^8.13.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}
