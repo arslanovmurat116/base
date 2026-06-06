@@ -8,6 +8,7 @@
     "start": "next start",
     "check:system": "node scripts/check-system.mjs",
     "bootstrap:live-db": "node scripts/bootstrap-live-db.mjs",
+    "validate:live-db": "node scripts/validate-live-db.mjs",
     "telegram:poll-once": "node scripts/telegram-poll-once.mjs",
     "telegram:poll-loop": "node scripts/telegram-poll-loop.mjs",
     "telegram:webhook:info": "node scripts/telegram-webhook.mjs info",

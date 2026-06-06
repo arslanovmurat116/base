@@ -1,15 +1,20 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Pool } from "pg";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const appDir = path.resolve(__dirname, "..");
-const rootDir = path.resolve(appDir, "..");
-const envPath = path.join(appDir, ".env.local");
+const repoRoot = path.resolve(__dirname, "..");
+const envPath = path.join(repoRoot, ".env.local");
+const databaseDir = path.join(repoRoot, "database");
+const cliArgs = new Set(process.argv.slice(2));
 
 function readEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Не найден env файл: ${filePath}`);
+  }
+
   return Object.fromEntries(
     fs
       .readFileSync(filePath, "utf8")
@@ -23,16 +28,58 @@ function readEnvFile(filePath) {
   );
 }
 
+function requireEnv(env, key) {
+  if (!env[key]) {
+    throw new Error(`Не задана переменная ${key} в ${envPath}`);
+  }
+}
+
+function resolveSqlFiles() {
+  const schemaFiles = [
+    "001_lead_control_schema.sql",
+    "002_lead_control_ops.sql",
+    "003_telegram_support.sql",
+    "004_system_config.sql",
+    "005_sales_ops.sql",
+    "006_appointments.sql",
+    "007_appointment_followthrough.sql",
+    "008_telegram_qualification.sql",
+    "009_performance_indexes.sql"
+  ];
+
+  const withLocalSeed =
+    cliArgs.has("--with-local-seed") ||
+    cliArgs.has("--with-demo") ||
+    process.env.LIVE_DB_WITH_LOCAL_SEED === "true";
+  const withDemoSeed =
+    cliArgs.has("--with-demo") || process.env.LIVE_DB_WITH_DEMO === "true";
+
+  const selected = [...schemaFiles];
+
+  if (withLocalSeed) {
+    selected.push("100_seed_local.sql");
+  }
+
+  if (withDemoSeed) {
+    selected.push("110_seed_demo_pipeline.sql");
+  }
+
+  return selected.map((name) => path.join(databaseDir, name));
+}
+
 const env = readEnvFile(envPath);
-const sqlFiles = [
-  "001_lead_control_schema.sql",
-  "002_lead_control_ops.sql",
-  "003_telegram_support.sql",
-  "004_system_config.sql",
-  "005_sales_ops.sql",
-  "100_seed_local.sql",
-  "110_seed_demo_pipeline.sql"
-].map((name) => path.join(rootDir, "database", name));
+requireEnv(env, "POSTGRES_HOST");
+requireEnv(env, "POSTGRES_DATABASE");
+requireEnv(env, "POSTGRES_USER");
+requireEnv(env, "POSTGRES_PASSWORD");
+
+const sqlFiles = resolveSqlFiles();
+
+for (const filePath of sqlFiles) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Не найден SQL файл: ${filePath}`);
+  }
+}
 
 const pool = new Pool({
   host: env.POSTGRES_HOST,
@@ -50,6 +97,8 @@ async function main() {
       await pool.query(sql);
       console.log(`APPLIED ${path.basename(filePath)}`);
     }
+
+    console.log("BOOTSTRAP_OK");
   } finally {
     await pool.end();
   }
