@@ -76,6 +76,7 @@ async function main() {
         { command: "register", description: "Привязать роль и имя" },
         { command: "status", description: "Проверить привязку чата" },
         { command: "today", description: "Сводка на сегодня" },
+        { command: "control", description: "Контроль по срокам и замерам" },
         { command: "alerts", description: "Просрочки и возвраты" },
         { command: "appointments", description: "Замеры и встречи" }
       ]

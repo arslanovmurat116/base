@@ -120,6 +120,7 @@ npm run telegram:webhook:delete
 - `/register`
 - `/status`
 - `/today`
+- `/control`
 - `/alerts`
 - `/appointments`
 
@@ -134,7 +135,16 @@ npm run telegram:webhook:delete
 
 ```powershell
 Invoke-WebRequest "https://mebel-rdn.vercel.app/api/telegram/dispatch?dryRun=1&mode=daily"
-Invoke-WebRequest "https://mebel-rdn.vercel.app/api/telegram/dispatch?dryRun=0&mode=control&force=1"
+```
+
+Живая отправка через `/api/telegram/dispatch` в production теперь защищена `Authorization: Bearer <CRON_SECRET>`.
+То есть публично можно смотреть `dryRun`, а боевые рассылки запускаются только авторизованно.
+
+Пример live-запуска:
+
+```powershell
+Invoke-WebRequest "https://mebel-rdn.vercel.app/api/telegram/dispatch?dryRun=0&mode=control&force=1" `
+  -Headers @{ Authorization = "Bearer $env:CRON_SECRET" }
 ```
 
 Защищённые cron endpoints:

@@ -12,10 +12,40 @@ function parseBooleanFlag(value, fallbackValue) {
   return ["1", "true", "yes", "on"].includes(String(value).toLowerCase());
 }
 
+function hasDispatchAuthorization(request) {
+  if (process.env.NODE_ENV !== "production") {
+    return true;
+  }
+
+  const expectedSecret = process.env.CRON_SECRET || "";
+
+  if (!expectedSecret) {
+    return false;
+  }
+
+  return request.headers.get("authorization") === `Bearer ${expectedSecret}`;
+}
+
+function buildUnauthorizedResponse() {
+  return NextResponse.json(
+    {
+      ok: false,
+      message: "Live Telegram dispatch is not authorized"
+    },
+    { status: 401 }
+  );
+}
+
 export async function GET(request) {
   const searchParams = request.nextUrl.searchParams;
+  const dryRun = parseBooleanFlag(searchParams.get("dryRun"), true);
+
+  if (!dryRun && !hasDispatchAuthorization(request)) {
+    return buildUnauthorizedResponse();
+  }
+
   const result = await runTelegramDispatch({
-    dryRun: parseBooleanFlag(searchParams.get("dryRun"), true),
+    dryRun,
     force: parseBooleanFlag(searchParams.get("force"), false),
     mode: searchParams.get("mode"),
     role: searchParams.get("role"),
@@ -30,8 +60,14 @@ export async function GET(request) {
 
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
+  const dryRun = body?.dryRun !== false;
+
+  if (!dryRun && !hasDispatchAuthorization(request)) {
+    return buildUnauthorizedResponse();
+  }
+
   const result = await runTelegramDispatch({
-    dryRun: body?.dryRun !== false,
+    dryRun,
     force: body?.force === true,
     mode: body?.mode || null,
     role: body?.role || null,
