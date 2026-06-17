@@ -15,8 +15,9 @@ const displayFont = Lora({
 });
 
 export const metadata = {
-  title: "Mebel RDN CRM",
-  description: "CRM мебельного цеха: заявки, замеры, расчёты, предоплата и запуск в производство"
+  title: "Mebel RDN Mini App",
+  description:
+    "Telegram Mini App для мебельного бизнеса: заявки, консультация, дожим до предоплаты и контроль цеха по подписке."
 };
 
 export default function RootLayout({ children }) {
@@ -26,10 +27,10 @@ export default function RootLayout({ children }) {
         <div className="app-frame">
           <header className="topbar">
             <Link className="brand" href="/">
-              <span className="brand-mark">DM</span>
+              <span className="brand-mark">MR</span>
               <div>
-                <strong>Mebel RDN CRM</strong>
-                <small>Заявки, замеры, расчёты и контроль заказа в одном контуре</small>
+                <strong>Mebel RDN Mini App</strong>
+                <small>Telegram-система для заявок, дожима до продажи и контроля мебельного цеха</small>
               </div>
             </Link>
             <Suspense fallback={null}>

@@ -2,32 +2,19 @@ import Link from "next/link";
 import {
   getAppointmentsData,
   getDashboardData,
-  getLeadsData,
-  getWorkboardData
+  getLeadsData
 } from "../lib/server-data";
-import {
-  getLeadAppointmentHref,
-  getLeadStatusHref
-} from "../lib/lead-links";
 
-function StatCard({ label, value, note, href }) {
-  const content = (
-    <>
+const OPEN_BOT_HREF = "https://t.me/mebel_rdn_bot";
+
+function StatCard({ label, value, note }) {
+  return (
+    <article className="stat-card">
       <p className="eyebrow">{label}</p>
       <strong>{value}</strong>
       <span>{note}</span>
-    </>
+    </article>
   );
-
-  if (href) {
-    return (
-      <Link className="stat-card stat-card-link" href={href}>
-        {content}
-      </Link>
-    );
-  }
-
-  return <article className="stat-card">{content}</article>;
 }
 
 function SectionTitle({ eyebrow, title, text }) {
@@ -40,318 +27,301 @@ function SectionTitle({ eyebrow, title, text }) {
   );
 }
 
-function QueueCard({ item }) {
-  const href = getLeadStatusHref(item.slug, item.status);
-  const content = (
-    <>
-      <div>
-        <h3>{item.lead}</h3>
-        <p>{item.source}</p>
-      </div>
-      <div className="queue-side">
-        <span>{item.owner}</span>
-        <strong>{item.deadline}</strong>
-        <em>{formatLeadStatus(item.status)}</em>
-      </div>
-    </>
+function ValueCard({ title, text, tone }) {
+  return (
+    <article className={`panel value-card ${tone || ""}`.trim()}>
+      <h3>{title}</h3>
+      <p>{text}</p>
+    </article>
+  );
+}
+
+function PlanCard({ name, price, note, accent, features, ctaLabel, ctaHref, external = false }) {
+  const cardClass = `panel plan-card ${accent ? "plan-card-accent" : ""}`.trim();
+  const cta = external ? (
+    <a className={accent ? "primary-link" : "ghost-link"} href={ctaHref} target="_blank" rel="noreferrer">
+      {ctaLabel}
+    </a>
+  ) : (
+    <Link className={accent ? "primary-link" : "ghost-link"} href={ctaHref}>
+      {ctaLabel}
+    </Link>
   );
 
-  if (href) {
-    return (
-      <Link className="queue-item queue-item-link-card" href={href}>
-        {content}
+  return (
+    <article className={cardClass}>
+      <p className="eyebrow">{name}</p>
+      <strong className="plan-price">{price}</strong>
+      <p className="plan-note">{note}</p>
+      <div className="plan-feature-list">
+        {features.map((feature) => (
+          <span key={feature} className="plan-feature">
+            {feature}
+          </span>
+        ))}
+      </div>
+      <div className="plan-card-action">{cta}</div>
+    </article>
+  );
+}
+
+function ProofCard({ title, text, href, hrefLabel }) {
+  return (
+    <article className="panel proof-card">
+      <h3>{title}</h3>
+      <p>{text}</p>
+      <Link className="ghost-link" href={href}>
+        {hrefLabel}
       </Link>
-    );
-  }
-
-  return <article className="queue-item">{content}</article>;
+    </article>
+  );
 }
 
-function formatLeadStatus(status) {
-  switch (status) {
-    case "NEW":
-      return "Новая заявка";
-    case "CONTACTED":
-      return "Связаться";
-    case "QUALIFIED":
-      return "Расчёт стоимости";
-    case "MEETING":
-      return "Замер назначен";
-    case "PROPOSAL":
-      return "Согласование";
-    case "WON":
-      return "Предоплата";
-    case "LOST":
-      return "Отказ";
-    default:
-      return status || "Сделка";
-  }
-}
-
-function formatAppointmentType(type) {
-  switch (type) {
-    case "measurement":
-      return "Замер";
-    case "showroom":
-      return "Шоурум";
-    case "consultation":
-      return "Консультация";
-    case "call":
-      return "Созвон";
-    default:
-      return type || "Встреча";
-  }
-}
-
-function formatAppointmentStatus(status) {
-  switch (status) {
-    case "SCHEDULED":
-      return "Назначено";
-    case "CONFIRMED":
-      return "Подтверждено";
-    case "COMPLETED":
-      return "Проведено";
-    case "CANCELLED":
-      return "Отменено";
-    case "NO_SHOW":
-      return "Не состоялось";
-    default:
-      return status;
-  }
-}
-
-function getStageHref(stageName) {
-  switch (stageName) {
-    case "Новая заявка":
-      return "/leads?status=NEW";
-    case "Связаться":
-      return "/leads?status=CONTACTED";
-    case "Расчёт стоимости":
-      return "/leads?status=QUALIFIED";
-    case "Замер назначен":
-      return "/leads?status=MEETING";
-    case "Согласование":
-      return "/leads?status=PROPOSAL";
-    default:
-      return "/leads";
-  }
-}
-
-function getDashboardStatHref(index) {
-  const hrefs = [
-    "/leads?status=NEW",
-    "/appointments?status=SCHEDULED",
-    "/appointments?status=CONFIRMED",
-    "/workboard?view=alerts"
-  ];
-
-  return hrefs[index] || "/workboard";
+function RoadmapCard({ step, title, text }) {
+  return (
+    <article className="panel roadmap-card">
+      <span className="roadmap-step">{step}</span>
+      <h3>{title}</h3>
+      <p>{text}</p>
+    </article>
+  );
 }
 
 export default async function HomePage() {
-  const [dashboard, appointments, leads, workboard] = await Promise.all([
+  const [dashboard, appointments, leads] = await Promise.all([
     getDashboardData(),
     getAppointmentsData(),
-    getLeadsData(),
-    getWorkboardData()
+    getLeadsData()
   ]);
 
-  const activeDeals = leads.filter(
-    (lead) => !["WON", "LOST"].includes(String(lead.status))
+  const activeDeals = leads.filter((lead) => !["WON", "LOST"].includes(String(lead.status))).length;
+  const todayAppointments = appointments.filter((item) =>
+    ["SCHEDULED", "CONFIRMED"].includes(String(item.status))
   ).length;
   const estimateBacklog = leads.filter((lead) =>
     ["CONTACTED", "QUALIFIED", "PROPOSAL"].includes(String(lead.status))
   ).length;
-  const upcomingMeasurements = appointments.filter((item) =>
-    ["SCHEDULED", "CONFIRMED"].includes(String(item.status))
-  );
-  const nextMeasurements = [...upcomingMeasurements]
-    .sort((first, second) => {
-      const firstDate = first.scheduledAtIso
-        ? new Date(first.scheduledAtIso).getTime()
-        : Number.MAX_SAFE_INTEGER;
-      const secondDate = second.scheduledAtIso
-        ? new Date(second.scheduledAtIso).getTime()
-        : Number.MAX_SAFE_INTEGER;
-      return firstDate - secondDate;
-    })
-    .slice(0, 4);
+  const prepaymentFocus = leads.filter((lead) =>
+    String(lead.prepaymentStatus || "").toLowerCase().includes("ожида")
+  ).length;
 
   return (
-    <main className="page-shell">
-      <section className="hero-panel">
+    <main className="page-shell landing-shell">
+      <section className="hero-panel product-hero">
         <div className="hero-copy">
-          <p className="eyebrow">Мебельный MVP</p>
-          <h1>Заявки, расчёты и замеры в одном понятном контуре.</h1>
+          <p className="eyebrow">Telegram Mini App</p>
+          <h1>Система для мебельного цеха, которая принимает заявки, дожимает до продажи и держит цех под контролем.</h1>
           <p className="hero-text">
-            Это рабочий слой для мебельного бизнеса: взять входящий лид, быстро
-            квалифицировать, дать диапазон цены, назначить замер и не потерять
-            сделку на повторном контакте. Без лишних модулей, без серой админки и без
-            абстрактного AI-шума.
+            Мы больше не упаковываем это как просто внутреннюю CRM. Это продаваемый Telegram-first продукт:
+            бот принимает входящие, mini app ведёт клиента к замеру и предоплате, а back-office держит
+            под контролем менеджера, замерщика, смету, производство и установку.
           </p>
 
           <div className="hero-tag-row">
-            <span className="hero-tag">Кухни</span>
-            <span className="hero-tag">Шкафы и гардеробные</span>
-            <span className="hero-tag">Корпусная мебель</span>
-            <span className="hero-tag">Замер и расчёт</span>
+            <span className="hero-tag">Заявки внутри Telegram</span>
+            <span className="hero-tag">Дожим до предоплаты</span>
+            <span className="hero-tag">Контроль работы цеха</span>
+            <span className="hero-tag">Подписка и платные функции</span>
           </div>
 
           <div className="quick-link-row">
-            <Link className="primary-link" href="/workboard">
-              Открыть смену
+            <a className="primary-link" href={OPEN_BOT_HREF} target="_blank" rel="noreferrer">
+              Открыть бота
+            </a>
+            <Link className="ghost-link" href="/workboard">
+              Смотреть демо-контуру
             </Link>
             <Link className="ghost-link" href="/leads">
-              Перейти к сделкам
+              Открыть сделки
             </Link>
           </div>
         </div>
 
-        <div className="hero-aside">
-          <Link className="hero-kpi-card hero-kpi-link" href="/leads">
-            <p className="eyebrow">Активный контур</p>
-            <strong>{activeDeals}</strong>
-            <p>Сделок сейчас в работе: от новой заявки до расчёта, замера и предоплаты.</p>
-          </Link>
-          <Link className="hero-kpi-card hero-kpi-link" href="/leads?status=QUALIFIED">
-            <p className="eyebrow">На расчёт</p>
-            <strong>{estimateBacklog}</strong>
-            <p>Клиентов ждут следующий шаг, смета или аккуратный возврат по цене.</p>
-          </Link>
-          <Link className="hero-kpi-card hero-kpi-link" href="/appointments?status=CONFIRMED">
-            <p className="eyebrow">Ближайшие замеры</p>
-            <strong>{upcomingMeasurements.length}</strong>
-            <p>Подтверждённые выезды и консультации, которые двигают сделки дальше.</p>
-          </Link>
+        <div className="hero-aside product-hero-aside">
+          <article className="hero-kpi-card">
+            <p className="eyebrow">Что продаём</p>
+            <strong>Не CRM-экран</strong>
+            <p>
+              Продаём систему роста для мебельного бизнеса: принять заявку, проконсультировать,
+              не потерять клиента, дожать до денег и не утонуть в хаосе цеха.
+            </p>
+          </article>
+          <article className="hero-kpi-card">
+            <p className="eyebrow">Монетизация</p>
+            <strong>Подписка + доп. функции</strong>
+            <p>
+              Базовые планы по подписке, отдельные апгрейды на дожим, проектные файлы,
+              контроль оплат, роли и производственный контур.
+            </p>
+          </article>
+          <article className="hero-kpi-card">
+            <p className="eyebrow">Первый рынок</p>
+            <strong>Мебельные цеха и студии</strong>
+            <p>
+              Малые и средние команды, у которых заявки уже есть, но теряются деньги между
+              консультацией, расчётом, замером, предоплатой и установкой.
+            </p>
+          </article>
         </div>
       </section>
 
       <section className="stats-grid">
-        {dashboard.stats.map((item, index) => (
-          <StatCard key={item.label} {...item} href={getDashboardStatHref(index)} />
-        ))}
+        <StatCard
+          label="Демо-контур"
+          value={activeDeals}
+          note="Сделок уже живут в текущем demo-слое и показывают реальную мебельную воронку."
+        />
+        <StatCard
+          label="Фокус на расчётах"
+          value={estimateBacklog}
+          note="Клиенты, которых уже можно вести к смете, КП и согласованию."
+        />
+        <StatCard
+          label="Замеры и встречи"
+          value={todayAppointments}
+          note="Контур замеров уже готов как доказательство, что это не только маркетинг."
+        />
+        <StatCard
+          label="Дожим до денег"
+          value={prepaymentFocus}
+          note="Сделки, где ценность продукта видна напрямую: не упустить предоплату."
+        />
       </section>
 
       <section className="dashboard-grid">
         <section className="panel">
           <SectionTitle
-            eyebrow="Воронка"
-            title="Где сейчас стоят сделки"
-            text="На старте нам нужна не сложная аналитика, а честная картина: сколько заявок ещё свежие, сколько уже ждут расчёта, где назначен замер и где пора дожимать после КП."
+            eyebrow="Ценность"
+            title="Что должен уметь продукт, за который платят каждый месяц"
+            text="Нам нужен не набор красивых экранов, а система, которая сама двигает клиента и дисциплинирует команду."
           />
-
-          <div className="stage-list">
-            {dashboard.stages.map((stage) => (
-              <Link className="stage-row stage-row-link" href={getStageHref(stage.name)} key={stage.name}>
-                <div className="stage-meta">
-                  <span
-                    className="stage-dot"
-                    style={{ backgroundColor: stage.tone }}
-                  />
-                  <span>{stage.name}</span>
-                </div>
-                <strong>{stage.count}</strong>
-              </Link>
-            ))}
+          <div className="value-grid">
+            <ValueCard
+              title="Принимает заявки"
+              text="Бот и mini app встречают входящий контакт внутри Telegram, фиксируют источник, создают карточку и не дают лиду потеряться."
+              tone="value-card-accent"
+            />
+            <ValueCard
+              title="Консультирует и дожимает"
+              text="Менеджер получает короткие сценарии, ответы и контрольные точки, а клиент идёт к расчёту, замеру и предоплате."
+            />
+            <ValueCard
+              title="Контролирует цех"
+              text="После замера система ведёт проект, смету, оплату, производство, установку и даёт директору контроль в Telegram."
+            />
           </div>
         </section>
 
         <section className="panel">
           <SectionTitle
-            eyebrow="Очередь"
-            title="Кому команда должна ответить сегодня"
-            text="Это не дашборд ради дашборда. Это короткая очередь по тем клиентам, где скорость ответа и следующий шаг прямо влияют на деньги."
+            eyebrow="MVP продажи"
+            title="Что показываем первым клиентам"
+            text="Сейчас нам нужен не идеальный продукт на все времена, а жёсткий продающий контур, который быстро объясняет ценность."
           />
-
-          <div className="queue-list">
-            {workboard.urgentLeads.slice(0, 4).map((item) => (
-              <QueueCard key={`${item.lead}-${item.deadline}`} item={item} />
-            ))}
-          </div>
-        </section>
-      </section>
-
-      <section className="dashboard-grid">
-        <section className="panel">
-          <SectionTitle
-            eyebrow="Источники"
-            title="Что даёт не только трафик, но и реальные сделки"
-            text="Для мебельного бизнеса важен не просто объём заявок. Нужно видеть, какой канал даёт тёплых клиентов, у кого быстрее происходит расчёт и где менеджер не тратит время впустую."
-          />
-
-          <div className="source-grid">
-            {dashboard.sources.map((item) => (
-              <Link className="source-card source-card-link" href="/leads" key={item.name}>
-                <h3>{item.name}</h3>
-                <dl>
-                  <div>
-                    <dt>Лиды</dt>
-                    <dd>{item.leads}</dd>
-                  </div>
-                  <div>
-                    <dt>CPL</dt>
-                    <dd>{item.cpl}</dd>
-                  </div>
-                  <div>
-                    <dt>Сигнал</dt>
-                    <dd>{item.result}</dd>
-                  </div>
-                </dl>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel">
-          <SectionTitle
-            eyebrow="Ближайшие выезды"
-            title="Замеры и консультации, которые нельзя потерять"
-            text="Отдельный контур под выезды помогает не забыть про адрес, подтверждение, шоурум и всё то, из-за чего мебельная сделка часто ломается уже после хорошего первого контакта."
-          />
-
-          <div className="compact-list">
-            {nextMeasurements.map((item) => (
-              <article className="compact-item" key={item.id}>
-                <div className="compact-item-head">
-                  <strong>
-                    {getLeadAppointmentHref(item) ? (
-                      <Link className="work-item-link" href={getLeadAppointmentHref(item)}>
-                        {item.lead}
-                      </Link>
-                    ) : (
-                      item.lead
-                    )}
-                  </strong>
-                  <span className={`status-chip status-chip-${String(item.status).toLowerCase()}`}>
-                    {formatAppointmentStatus(item.status)}
-                  </span>
-                </div>
-                <p className="compact-note">{item.note}</p>
-                <div className="compact-meta">
-                  <span>{formatAppointmentType(item.type)}</span>
-                  <span>{item.scheduledAt}</span>
-                  <span>{item.location}</span>
-                </div>
-              </article>
-            ))}
+          <div className="proof-grid">
+            <ProofCard
+              title="Бот как вход"
+              text="Регистрация роли, ответы по ключевым словам, быстрые ссылки на сделки и контрольные сообщения уже есть."
+              href="/workboard"
+              hrefLabel="Открыть смену"
+            />
+            <ProofCard
+              title="Сделка как центр работы"
+              text="Карточка сделки уже держит клиента, смету, проектные файлы, оплату, замер и производство в одном месте."
+              href="/leads/l-202"
+              hrefLabel="Открыть демо-сделку"
+            />
+            <ProofCard
+              title="Проект и смета"
+              text="Мы уже можем показывать превью проекта, файлы, смету и связку с follow-up без внешней таблицы."
+              href="/leads/l-202#deal-project-files"
+              hrefLabel="Открыть проектный блок"
+            />
           </div>
         </section>
       </section>
 
       <section className="panel">
         <SectionTitle
-          eyebrow="Стартовый контур"
-          title="Что входит в сильный мебельный MVP"
-          text="На первом этапе проект не расползается в производство, финансы и десятки кабинетов. Здесь только тот минимум, который реально двигает продажи и дисциплинирует команду."
+          eyebrow="Тарифы"
+          title="Как превращаем продукт в подписку"
+          text="Наша модель должна быть простой для продажи: понятный старт, понятный апгрейд, понятные доп. деньги за расширение."
         />
+        <div className="plan-grid">
+          <PlanCard
+            name="Старт"
+            price="79 000 ₸ / мес"
+            note="Для небольшого цеха, который хочет не терять входящие и держать воронку в Telegram."
+            features={[
+              "Бот заявок",
+              "Карточки клиентов и сделок",
+              "Замеры и follow-up",
+              "Базовые Telegram-уведомления"
+            ]}
+            ctaLabel="Смотреть демо"
+            ctaHref="/leads"
+          />
+          <PlanCard
+            name="Рост"
+            price="149 000 ₸ / мес"
+            note="Для команды, которая хочет дожимать до предоплаты, видеть проектные файлы и контролировать оплату."
+            accent
+            features={[
+              "Всё из Старт",
+              "Проект, смета и файлы",
+              "Контроль оплат",
+              "Менеджерские сценарии дожима"
+            ]}
+            ctaLabel="Открыть бота"
+            ctaHref={OPEN_BOT_HREF}
+            external
+          />
+          <PlanCard
+            name="Цех"
+            price="249 000 ₸ / мес"
+            note="Для тех, кому уже нужен полный контур: директор, менеджер, замерщик, производство и установка."
+            features={[
+              "Всё из Рост",
+              "Производственный контур",
+              "Роли и контроль команды",
+              "Директорские сводки и отчёты"
+            ]}
+            ctaLabel="Открыть демо-контуру"
+            ctaHref="/appointments"
+          />
+        </div>
 
-        <div className="module-grid">
-          {dashboard.modules.map((item) => (
-            <article className="module-card" key={item.title}>
-              <h3>{item.title}</h3>
-              <p>{item.text}</p>
-            </article>
-          ))}
+        <div className="addon-strip">
+          <span className="hero-tag">Подключаемые функции</span>
+          <span className="hero-tag">Автодожим в Telegram</span>
+          <span className="hero-tag">Файлы проекта и смета</span>
+          <span className="hero-tag">Производство и установка</span>
+          <span className="hero-tag">White-label для студий</span>
+        </div>
+      </section>
+
+      <section className="panel">
+        <SectionTitle
+          eyebrow="Первые деньги"
+          title="Как выходим к первой продаже"
+          text="Я бы не гнался сейчас за идеальным масштабированием. Нам нужна одна жёсткая цепочка: продукт, демо, оффер, первый клиент, потом повторяем."
+        />
+        <div className="roadmap-grid">
+          <RoadmapCard
+            step="01"
+            title="Переупаковать вход"
+            text="Главная страница, бот и демо должны объяснять, что это Telegram-система роста для мебельного бизнеса, а не внутренняя админка."
+          />
+          <RoadmapCard
+            step="02"
+            title="Продать пилот"
+            text="Первый оффер не коробка на все времена, а пилот: подключение, запуск, обучение, первые заявки и контроль дожима."
+          />
+          <RoadmapCard
+            step="03"
+            title="Перевести в подписку"
+            text="После пилота клиент переходит на план Старт / Рост / Цех, а мы продаём апгрейды по ролям, автоматике и контролю производства."
+          />
         </div>
       </section>
     </main>

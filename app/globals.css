@@ -1073,6 +1073,131 @@ select {
   border-radius: 999px;
 }
 
+.landing-shell {
+  display: grid;
+  gap: 22px;
+}
+
+.product-hero {
+  background:
+    radial-gradient(circle at top left, rgba(200, 109, 52, 0.18), transparent 34%),
+    linear-gradient(180deg, rgba(255, 250, 244, 0.94), rgba(244, 234, 219, 0.9));
+}
+
+.product-hero-aside {
+  gap: 16px;
+}
+
+.value-grid,
+.plan-grid,
+.proof-grid,
+.roadmap-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.value-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.plan-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.proof-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.roadmap-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.value-card,
+.plan-card,
+.proof-card,
+.roadmap-card {
+  padding: 22px;
+  border-radius: 28px;
+}
+
+.value-card-accent,
+.plan-card-accent {
+  background:
+    linear-gradient(180deg, rgba(244, 234, 219, 0.98), rgba(255, 247, 238, 0.98));
+  border-color: rgba(200, 109, 52, 0.22);
+}
+
+.value-card h3,
+.plan-card .eyebrow,
+.proof-card h3,
+.roadmap-card h3 {
+  margin: 0;
+}
+
+.value-card p,
+.proof-card p,
+.roadmap-card p,
+.plan-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.plan-price {
+  display: block;
+  margin-top: 10px;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  letter-spacing: -0.04em;
+}
+
+.plan-feature-list {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.plan-feature {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.64);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.plan-card-action {
+  margin-top: 20px;
+}
+
+.addon-strip {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.roadmap-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
 @media (max-width: 980px) {
   .hero-panel,
   .stats-grid,
@@ -1080,6 +1205,10 @@ select {
   .dashboard-grid,
   .workboard-grid,
   .module-grid,
+  .value-grid,
+  .plan-grid,
+  .proof-grid,
+  .roadmap-grid,
   .project-preview-grid,
   .source-grid,
   .lead-grid,
