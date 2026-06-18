@@ -23,6 +23,7 @@ Do not start with developers or abstract automation talk.
 
 Show:
 
+- bot demo link with `start=demo`
 - the client menu
 - `Leave a request`
 - `Check order status`
@@ -38,6 +39,7 @@ Say:
 
 Go through the short request flow in the bot:
 
+- direct request link with `start=request`
 - client name
 - phone
 - product type

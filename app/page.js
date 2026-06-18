@@ -3,7 +3,9 @@ import { getAppointmentsData, getLeadsData } from "../lib/server-data";
 import { getLocale, pick } from "../lib/i18n";
 import { getLanguage } from "../lib/i18n-server";
 
-const OPEN_BOT_HREF = "https://t.me/mebel_rdn_bot";
+const TELEGRAM_BOT_BASE_HREF = "https://t.me/mebel_rdn_bot";
+const OPEN_BOT_HREF = `${TELEGRAM_BOT_BASE_HREF}?start=demo`;
+const START_REQUEST_HREF = `${TELEGRAM_BOT_BASE_HREF}?start=request`;
 
 function StatCard({ label, value, note }) {
   return (
@@ -220,13 +222,13 @@ export default async function HomePage() {
 
           <div className="quick-link-row">
             <a className="primary-link" href={OPEN_BOT_HREF} rel="noreferrer" target="_blank">
-              {pick(lang, "Open bot", "Открыть бота")}
+              {pick(lang, "Open bot demo", "Открыть демо в боте")}
+            </a>
+            <a className="ghost-link" href={START_REQUEST_HREF} rel="noreferrer" target="_blank">
+              {pick(lang, "Start client request", "Запустить заявку клиента")}
             </a>
             <Link className="ghost-link" href="/leads/l-202">
               {pick(lang, "Open sample deal", "Открыть пример сделки")}
-            </Link>
-            <Link className="ghost-link" href="/workboard">
-              {pick(lang, "Open workboard", "Открыть рабочую смену")}
             </Link>
           </div>
 
@@ -334,11 +336,11 @@ export default async function HomePage() {
         </div>
         <div className="cta-actions">
           <a className="primary-link" href={OPEN_BOT_HREF} rel="noreferrer" target="_blank">
-            {pick(lang, "Launch live bot", "Запустить живого бота")}
+            {pick(lang, "Launch bot demo", "Запустить демо в боте")}
           </a>
-          <Link className="ghost-link" href="/appointments">
-            {pick(lang, "Open measurements", "Открыть замеры")}
-          </Link>
+          <a className="ghost-link" href={START_REQUEST_HREF} rel="noreferrer" target="_blank">
+            {pick(lang, "Start client request", "Запустить заявку клиента")}
+          </a>
         </div>
       </section>
     </main>
