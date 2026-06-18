@@ -1,7 +1,8 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import FilterBar from "../../components/filter-bar";
 import FollowupCompleteButton from "../../components/followup-complete-button";
 import PilotRequestStatusForm from "../../components/pilot-request-status-form";
+import ProductLaunchStatusForm from "../../components/product-launch-status-form";
 import TaskCompleteButton from "../../components/task-complete-button";
 import {
   getLeadAlertHref,
@@ -56,51 +57,51 @@ function FocusCard({ label, value, note, href }) {
 function formatLeadStatus(status, lang) {
   switch (status) {
     case "NEW":
-      return pick(lang, "New lead", "Новая заявка");
+      return pick(lang, "New lead", "РќРѕРІР°СЏ Р·Р°СЏРІРєР°");
     case "CONTACTED":
-      return pick(lang, "Contact", "Связаться");
+      return pick(lang, "Contact", "РЎРІСЏР·Р°С‚СЊСЃСЏ");
     case "QUALIFIED":
-      return pick(lang, "Estimate", "Расчёт");
+      return pick(lang, "Estimate", "Р Р°СЃС‡С‘С‚");
     case "MEETING":
-      return pick(lang, "Measurement", "Замер");
+      return pick(lang, "Measurement", "Р—Р°РјРµСЂ");
     case "PROPOSAL":
-      return pick(lang, "Approval", "Согласование");
+      return pick(lang, "Approval", "РЎРѕРіР»Р°СЃРѕРІР°РЅРёРµ");
     case "WON":
-      return pick(lang, "Deposit", "Предоплата");
+      return pick(lang, "Deposit", "РџСЂРµРґРѕРїР»Р°С‚Р°");
     case "LOST":
-      return pick(lang, "Lost", "Отказ");
+      return pick(lang, "Lost", "РћС‚РєР°Р·");
     default:
-      return status || pick(lang, "Deal", "Сделка");
+      return status || pick(lang, "Deal", "РЎРґРµР»РєР°");
   }
 }
 
 function formatAppointmentType(type, lang) {
   switch (type) {
     case "measurement":
-      return pick(lang, "Measurement", "Замер");
+      return pick(lang, "Measurement", "Р—Р°РјРµСЂ");
     case "showroom":
-      return pick(lang, "Showroom", "Шоурум");
+      return pick(lang, "Showroom", "РЁРѕСѓСЂСѓРј");
     case "consultation":
-      return pick(lang, "Consultation", "Консультация");
+      return pick(lang, "Consultation", "РљРѕРЅСЃСѓР»СЊС‚Р°С†РёСЏ");
     case "call":
-      return pick(lang, "Call", "Созвон");
+      return pick(lang, "Call", "РЎРѕР·РІРѕРЅ");
     default:
-      return type || pick(lang, "Meeting", "Встреча");
+      return type || pick(lang, "Meeting", "Р’СЃС‚СЂРµС‡Р°");
   }
 }
 
 function formatAppointmentStatus(status, lang) {
   switch (status) {
     case "SCHEDULED":
-      return pick(lang, "Scheduled", "Назначено");
+      return pick(lang, "Scheduled", "РќР°Р·РЅР°С‡РµРЅРѕ");
     case "CONFIRMED":
-      return pick(lang, "Confirmed", "Подтверждено");
+      return pick(lang, "Confirmed", "РџРѕРґС‚РІРµСЂР¶РґРµРЅРѕ");
     case "COMPLETED":
-      return pick(lang, "Completed", "Проведено");
+      return pick(lang, "Completed", "РџСЂРѕРІРµРґРµРЅРѕ");
     case "CANCELLED":
-      return pick(lang, "Cancelled", "Отменено");
+      return pick(lang, "Cancelled", "РћС‚РјРµРЅРµРЅРѕ");
     case "NO_SHOW":
-      return pick(lang, "No-show", "Не состоялось");
+      return pick(lang, "No-show", "РќРµ СЃРѕСЃС‚РѕСЏР»РѕСЃСЊ");
     default:
       return status;
   }
@@ -109,19 +110,19 @@ function formatAppointmentStatus(status, lang) {
 function formatPilotRequestStatus(status, lang) {
   switch (status) {
     case "NEW":
-      return pick(lang, "New", "Новая");
+      return pick(lang, "New", "РќРѕРІР°СЏ");
     case "CONTACTED":
-      return pick(lang, "Contacted", "Связались");
+      return pick(lang, "Contacted", "РЎРІСЏР·Р°Р»РёСЃСЊ");
     case "DEMO_BOOKED":
-      return pick(lang, "Demo booked", "Демо назначено");
+      return pick(lang, "Demo booked", "Р”РµРјРѕ РЅР°Р·РЅР°С‡РµРЅРѕ");
     case "PILOT_ACTIVE":
-      return pick(lang, "Pilot active", "Пилот запущен");
+      return pick(lang, "Pilot active", "РџРёР»РѕС‚ Р·Р°РїСѓС‰РµРЅ");
     case "WON":
-      return pick(lang, "Won", "Продано");
+      return pick(lang, "Won", "РџСЂРѕРґР°РЅРѕ");
     case "LOST":
-      return pick(lang, "Lost", "Потеряно");
+      return pick(lang, "Lost", "РџРѕС‚РµСЂСЏРЅРѕ");
     default:
-      return status || pick(lang, "Pilot", "Пилот");
+      return status || pick(lang, "Pilot", "РџРёР»РѕС‚");
   }
 }
 
@@ -138,6 +139,44 @@ function getPilotStatusClassName(status) {
     case "WON":
       return "status-chip status-chip-won";
     case "LOST":
+      return "status-chip status-chip-lost";
+    default:
+      return "status-chip";
+  }
+}
+
+function formatProductLaunchStatus(status, lang) {
+  switch (status) {
+    case "KICKOFF_PENDING":
+      return pick(lang, "Kickoff pending", "Р–РґС‘С‚ kickoff");
+    case "ACCESS_SETUP":
+      return pick(lang, "Access setup", "Р”РѕСЃС‚СѓРїС‹ Рё setup");
+    case "TEAM_SETUP":
+      return pick(lang, "Team setup", "РљРѕРјР°РЅРґР° Рё РґР°РЅРЅС‹Рµ");
+    case "TRAINING":
+      return pick(lang, "Training", "РћР±СѓС‡РµРЅРёРµ");
+    case "LIVE":
+      return pick(lang, "Live", "Р—Р°РїСѓС‰РµРЅРѕ");
+    case "BLOCKED":
+      return pick(lang, "Blocked", "Р•СЃС‚СЊ Р±Р»РѕРєРµСЂ");
+    default:
+      return status || pick(lang, "Launch", "Р—Р°РїСѓСЃРє");
+  }
+}
+
+function getProductLaunchStatusClassName(status) {
+  switch (String(status || "").toUpperCase()) {
+    case "KICKOFF_PENDING":
+      return "status-chip status-chip-demo_booked";
+    case "ACCESS_SETUP":
+      return "status-chip status-chip-contacted";
+    case "TEAM_SETUP":
+      return "status-chip status-chip-pilot_active";
+    case "TRAINING":
+      return "status-chip status-chip-qualified";
+    case "LIVE":
+      return "status-chip status-chip-won";
+    case "BLOCKED":
       return "status-chip status-chip-lost";
     default:
       return "status-chip";
@@ -168,7 +207,7 @@ function LeadEntry({ item, note, lang }) {
             item.deadline || item.scheduledAt,
             lang,
             "Not scheduled",
-            "Не назначено"
+            "РќРµ РЅР°Р·РЅР°С‡РµРЅРѕ"
           )}
         </strong>
         <em>{item.status ? formatLeadStatus(item.status, lang) : item.type}</em>
@@ -179,11 +218,11 @@ function LeadEntry({ item, note, lang }) {
 
 function PilotRequestEntry({ item, lang }) {
   const metaLine =
-    [item.city, item.teamSize].filter(Boolean).join(" • ") ||
-    pick(lang, "Pilot launch request", "Заявка на запуск пилота");
+    [item.city, item.teamSize].filter(Boolean).join(" вЂў ") ||
+    pick(lang, "Pilot launch request", "Р—Р°СЏРІРєР° РЅР° Р·Р°РїСѓСЃРє РїРёР»РѕС‚Р°");
   const contactLine =
-    [item.contactName, item.phone].filter(Boolean).join(" • ") ||
-    pick(lang, "Contact details are missing.", "Контакт ещё не указан.");
+    [item.contactName, item.phone].filter(Boolean).join(" вЂў ") ||
+    pick(lang, "Contact details are missing.", "РљРѕРЅС‚Р°РєС‚ РµС‰С‘ РЅРµ СѓРєР°Р·Р°РЅ.");
 
   return (
     <article className="work-item">
@@ -194,12 +233,12 @@ function PilotRequestEntry({ item, lang }) {
             item.note,
             lang,
             "Open the pilot inbox and review the workshop pain point.",
-            "Откройте pilot inbox и посмотрите, с какой болью пришёл цех."
+            "РћС‚РєСЂРѕР№С‚Рµ pilot inbox Рё РїРѕСЃРјРѕС‚СЂРёС‚Рµ, СЃ РєР°РєРѕР№ Р±РѕР»СЊСЋ РїСЂРёС€С‘Р» С†РµС…."
           )}
         </p>
         {item.internalNote ? (
           <p className="pilot-internal-note">
-            {pick(lang, "Internal note", "Внутренняя заметка")}: {item.internalNote}
+            {pick(lang, "Internal note", "Р’РЅСѓС‚СЂРµРЅРЅСЏСЏ Р·Р°РјРµС‚РєР°")}: {item.internalNote}
           </p>
         ) : null}
         <PilotRequestStatusForm
@@ -211,9 +250,56 @@ function PilotRequestEntry({ item, lang }) {
       </div>
       <div className="work-meta">
         <span>{item.requestNumber}</span>
-        <strong>{translateScheduleText(item.createdAt, lang, "Just now", "Только что")}</strong>
+        <strong>{translateScheduleText(item.createdAt, lang, "Just now", "РўРѕР»СЊРєРѕ С‡С‚Рѕ")}</strong>
         <em className={getPilotStatusClassName(item.status)}>
           {formatPilotRequestStatus(item.status, lang)}
+        </em>
+        <em>{metaLine}</em>
+        <em>{contactLine}</em>
+      </div>
+    </article>
+  );
+}
+
+function ProductLaunchEntry({ item, lang }) {
+  const metaLine =
+    [item.city, item.teamSize].filter(Boolean).join(" вЂў ") ||
+    pick(lang, "Customer launch", "Р—Р°РїСѓСЃРє РєР»РёРµРЅС‚Р°");
+  const contactLine =
+    [item.contactName, item.phone].filter(Boolean).join(" вЂў ") ||
+    pick(lang, "Contact details are missing.", "РљРѕРЅС‚Р°РєС‚ РµС‰С‘ РЅРµ СѓРєР°Р·Р°РЅ.");
+
+  return (
+    <article className="work-item">
+      <div>
+        <strong>{item.workshopName || item.launchNumber}</strong>
+        <p>
+          {safeLocalizedText(
+            item.note,
+            lang,
+            "Open the launch inbox and move the workshop through kickoff, setup and go-live.",
+            "РћС‚РєСЂРѕР№С‚Рµ launch inbox Рё РїСЂРѕРІРµРґРёС‚Рµ С†РµС… С‡РµСЂРµР· kickoff, РЅР°СЃС‚СЂРѕР№РєСѓ Рё Р·Р°РїСѓСЃРє."
+          )}
+        </p>
+        {item.handoffNote ? (
+          <p className="pilot-internal-note">
+            {pick(lang, "Handoff note", "Handoff-Р·Р°РјРµС‚РєР°")}: {item.handoffNote}
+          </p>
+        ) : null}
+        <ProductLaunchStatusForm
+          currentNote={item.handoffNote || ""}
+          currentStatus={item.status || "KICKOFF_PENDING"}
+          lang={lang}
+          launchId={item.id || item.launchNumber}
+        />
+      </div>
+      <div className="work-meta">
+        <span>{item.launchNumber}</span>
+        <strong>
+          {translateScheduleText(item.updatedAt || item.createdAt, lang, "Just now", "РўРѕР»СЊРєРѕ С‡С‚Рѕ")}
+        </strong>
+        <em className={getProductLaunchStatusClassName(item.status)}>
+          {formatProductLaunchStatus(item.status, lang)}
         </em>
         <em>{metaLine}</em>
         <em>{contactLine}</em>
@@ -231,20 +317,20 @@ function getTaskHref(item) {
 
   const text = `${item.lane || ""} ${item.tag || ""} ${item.title || ""}`.toLowerCase();
 
-  if (text.includes("замер") || text.includes("measurement")) {
+  if (text.includes("Р·Р°РјРµСЂ") || text.includes("measurement")) {
     return "/appointments?status=SCHEDULED";
   }
 
   if (
-    text.includes("кп") ||
-    text.includes("расч") ||
-    text.includes("смет") ||
+    text.includes("РєРї") ||
+    text.includes("СЂР°СЃС‡") ||
+    text.includes("СЃРјРµС‚") ||
     text.includes("estimate")
   ) {
     return "/leads?status=QUALIFIED";
   }
 
-  if (text.includes("дожим") || text.includes("follow")) {
+  if (text.includes("РґРѕР¶РёРј") || text.includes("follow")) {
     return "/leads?status=PROPOSAL";
   }
 
@@ -255,13 +341,13 @@ function formatTaskTagText(value, lang) {
   const source = String(value || "").trim().toLowerCase();
 
   if (lang === "en") {
-    if (source.includes("первый контакт")) return "First contact";
-    if (source.includes("расч")) return "Estimate";
-    if (source.includes("сроч")) return "Urgent";
-    if (source.includes("офис")) return "Office";
-    if (source.includes("кп")) return "Quote";
-    if (source.includes("смет")) return "Estimate";
-    if (source.includes("замер")) return "Measurement";
+    if (source.includes("РїРµСЂРІС‹Р№ РєРѕРЅС‚Р°РєС‚")) return "First contact";
+    if (source.includes("СЂР°СЃС‡")) return "Estimate";
+    if (source.includes("СЃСЂРѕС‡")) return "Urgent";
+    if (source.includes("РѕС„РёСЃ")) return "Office";
+    if (source.includes("РєРї")) return "Quote";
+    if (source.includes("СЃРјРµС‚")) return "Estimate";
+    if (source.includes("Р·Р°РјРµСЂ")) return "Measurement";
   }
 
   return translateTaskTag(value, lang);
@@ -280,19 +366,20 @@ export default async function WorkboardPage({ searchParams }) {
   ]);
 
   const pilotInbox = Array.isArray(data.pilotInbox) ? data.pilotInbox : [];
+  const launchInbox = Array.isArray(data.launchInbox) ? data.launchInbox : [];
 
   const focus = [
     {
-      label: pick(lang, "No first reply", "Без первого ответа"),
+      label: pick(lang, "No first reply", "Р‘РµР· РїРµСЂРІРѕРіРѕ РѕС‚РІРµС‚Р°"),
       value: String(leads.filter((lead) => lead.status === "NEW").length),
       note: pick(
         lang,
         "New incoming leads that still need the first touch.",
-        "Новые заявки, которым ещё нужен первый контакт."
+        "РќРѕРІС‹Рµ Р·Р°СЏРІРєРё, РєРѕС‚РѕСЂС‹Рј РµС‰С‘ РЅСѓР¶РµРЅ РїРµСЂРІС‹Р№ РєРѕРЅС‚Р°РєС‚."
       )
     },
     {
-      label: pick(lang, "Waiting for estimate", "На расчёте"),
+      label: pick(lang, "Waiting for estimate", "РќР° СЂР°СЃС‡С‘С‚Рµ"),
       value: String(
         leads.filter((lead) =>
           ["CONTACTED", "QUALIFIED", "PROPOSAL"].includes(lead.status)
@@ -301,11 +388,11 @@ export default async function WorkboardPage({ searchParams }) {
       note: pick(
         lang,
         "Deals that now need pricing, estimate or quote follow-up.",
-        "Сделки, где сейчас нужен расчёт, смета или возврат по КП."
+        "РЎРґРµР»РєРё, РіРґРµ СЃРµР№С‡Р°СЃ РЅСѓР¶РµРЅ СЂР°СЃС‡С‘С‚, СЃРјРµС‚Р° РёР»Рё РІРѕР·РІСЂР°С‚ РїРѕ РљРџ."
       )
     },
     {
-      label: pick(lang, "Measurements and visits", "Замеры и встречи"),
+      label: pick(lang, "Measurements and visits", "Р—Р°РјРµСЂС‹ Рё РІСЃС‚СЂРµС‡Рё"),
       value: String(
         appointments.filter((item) => ["SCHEDULED", "CONFIRMED"].includes(item.status))
           .length
@@ -313,25 +400,34 @@ export default async function WorkboardPage({ searchParams }) {
       note: pick(
         lang,
         "Upcoming site visits, showroom meetings and consultations.",
-        "Ближайшие выезды, шоурум и консультации."
+        "Р‘Р»РёР¶Р°Р№С€РёРµ РІС‹РµР·РґС‹, С€РѕСѓСЂСѓРј Рё РєРѕРЅСЃСѓР»СЊС‚Р°С†РёРё."
       )
     },
     {
-      label: pick(lang, "Follow-ups", "Повторный контакт"),
+      label: pick(lang, "Follow-ups", "РџРѕРІС‚РѕСЂРЅС‹Р№ РєРѕРЅС‚Р°РєС‚"),
       value: String(followups.filter((item) => item.status === "PENDING").length),
       note: pick(
         lang,
         "Warm clients that should not be left without a callback.",
-        "Тёплые клиенты, которых нельзя оставить без возврата."
+        "РўС‘РїР»С‹Рµ РєР»РёРµРЅС‚С‹, РєРѕС‚РѕСЂС‹С… РЅРµР»СЊР·СЏ РѕСЃС‚Р°РІРёС‚СЊ Р±РµР· РІРѕР·РІСЂР°С‚Р°."
       )
     },
     {
-      label: pick(lang, "Pilot launches", "Запуски пилота"),
+      label: pick(lang, "Pilot launches", "Р—Р°РїСѓСЃРєРё РїРёР»РѕС‚Р°"),
       value: String(pilotInbox.length),
       note: pick(
         lang,
         "Workshop owners who asked to launch Furneq for their team.",
-        "Владельцы цехов, которые уже запросили запуск Furneq под свой процесс."
+        "Р’Р»Р°РґРµР»СЊС†С‹ С†РµС…РѕРІ, РєРѕС‚РѕСЂС‹Рµ СѓР¶Рµ Р·Р°РїСЂРѕСЃРёР»Рё Р·Р°РїСѓСЃРє Furneq РїРѕРґ СЃРІРѕР№ РїСЂРѕС†РµСЃСЃ."
+      )
+    },
+    {
+      label: pick(lang, "Customer launches", "Р—Р°РїСѓСЃРєРё РєР»РёРµРЅС‚Р°"),
+      value: String(launchInbox.length),
+      note: pick(
+        lang,
+        "Sold pilots that should now move through kickoff, setup and go-live.",
+        "РџСЂРѕРґР°РЅРЅС‹Рµ РїРёР»РѕС‚С‹, РєРѕС‚РѕСЂС‹Рµ СѓР¶Рµ РЅСѓР¶РЅРѕ РїСЂРѕРІРµСЃС‚Рё С‡РµСЂРµР· kickoff, РЅР°СЃС‚СЂРѕР№РєСѓ Рё Р·Р°РїСѓСЃРє."
       )
     }
   ];
@@ -344,7 +440,8 @@ export default async function WorkboardPage({ searchParams }) {
         "/workboard?view=estimates",
         "/appointments",
         "/workboard?view=followups",
-        "/workboard?view=pilots"
+        "/workboard?view=pilots",
+        "/workboard?view=launches"
       ][index] || "/workboard"
   }));
 
@@ -368,33 +465,35 @@ export default async function WorkboardPage({ searchParams }) {
   const showFollowups = view === "all" || view === "followups";
   const showAlerts = view === "all" || view === "alerts";
   const showPilots = view === "all" || view === "pilots";
+  const showLaunches = view === "all" || view === "launches";
 
   return (
     <main className="page-shell">
       <section className="page-heading">
-        <p className="eyebrow">{pick(lang, "Workboard", "Смена")}</p>
-        <h1>{pick(lang, "One queue for the whole team", "Одна рабочая очередь для всей команды")}</h1>
+        <p className="eyebrow">{pick(lang, "Workboard", "РЎРјРµРЅР°")}</p>
+        <h1>{pick(lang, "One queue for the whole team", "РћРґРЅР° СЂР°Р±РѕС‡Р°СЏ РѕС‡РµСЂРµРґСЊ РґР»СЏ РІСЃРµР№ РєРѕРјР°РЅРґС‹")}</h1>
         <p>
           {pick(
             lang,
             "Use one board for new leads, estimate work, upcoming visits, follow-ups and risk signals.",
-            "Один экран для новых заявок, расчётов, замеров, возвратов и сигналов риска."
+            "РћРґРёРЅ СЌРєСЂР°РЅ РґР»СЏ РЅРѕРІС‹С… Р·Р°СЏРІРѕРє, СЂР°СЃС‡С‘С‚РѕРІ, Р·Р°РјРµСЂРѕРІ, РІРѕР·РІСЂР°С‚РѕРІ Рё СЃРёРіРЅР°Р»РѕРІ СЂРёСЃРєР°."
           )}
         </p>
       </section>
 
       <section className="panel">
         <FilterBar
-          title={pick(lang, "Show", "Показать")}
+          title={pick(lang, "Show", "РџРѕРєР°Р·Р°С‚СЊ")}
           paramKey="view"
           options={[
-            { value: "all", label: pick(lang, "All", "Всё") },
-            { value: "intake", label: pick(lang, "New leads", "Новые заявки") },
-            { value: "estimates", label: pick(lang, "Estimate", "Расчёт") },
-            { value: "measurements", label: pick(lang, "Appointments", "Замеры") },
-            { value: "followups", label: pick(lang, "Follow-ups", "Возвраты") },
-            { value: "alerts", label: pick(lang, "Risks", "Риски") },
-            { value: "pilots", label: pick(lang, "Pilots", "Пилоты") }
+            { value: "all", label: pick(lang, "All", "Р’СЃС‘") },
+            { value: "intake", label: pick(lang, "New leads", "РќРѕРІС‹Рµ Р·Р°СЏРІРєРё") },
+            { value: "estimates", label: pick(lang, "Estimate", "Р Р°СЃС‡С‘С‚") },
+            { value: "measurements", label: pick(lang, "Appointments", "Р—Р°РјРµСЂС‹") },
+            { value: "followups", label: pick(lang, "Follow-ups", "Р’РѕР·РІСЂР°С‚С‹") },
+            { value: "alerts", label: pick(lang, "Risks", "Р РёСЃРєРё") },
+            { value: "pilots", label: pick(lang, "Pilots", "РџРёР»РѕС‚С‹") },
+            { value: "launches", label: pick(lang, "Launches", "Запуски") }
           ]}
         />
         <div className="focus-grid">
@@ -408,8 +507,8 @@ export default async function WorkboardPage({ searchParams }) {
         {showLeads ? (
           <article className="panel workboard-panel">
             <div className="section-title">
-              <p className="eyebrow">{pick(lang, "New leads", "Новые заявки")}</p>
-              <h2>{pick(lang, "Who needs the first contact now", "Кому нужен первый контакт прямо сейчас")}</h2>
+              <p className="eyebrow">{pick(lang, "New leads", "РќРѕРІС‹Рµ Р·Р°СЏРІРєРё")}</p>
+              <h2>{pick(lang, "Who needs the first contact now", "РљРѕРјСѓ РЅСѓР¶РµРЅ РїРµСЂРІС‹Р№ РєРѕРЅС‚Р°РєС‚ РїСЂСЏРјРѕ СЃРµР№С‡Р°СЃ")}</h2>
             </div>
             <div className="workboard-stack">
               {data.urgentLeads.map((item) => (
@@ -427,8 +526,8 @@ export default async function WorkboardPage({ searchParams }) {
         {showPilots ? (
           <article className="panel workboard-panel">
             <div className="section-title">
-              <p className="eyebrow">{pick(lang, "Pilots", "Пилоты")}</p>
-              <h2>{pick(lang, "Who wants Furneq for their workshop", "Кто хочет внедрить Furneq в свой цех")}</h2>
+              <p className="eyebrow">{pick(lang, "Pilots", "РџРёР»РѕС‚С‹")}</p>
+              <h2>{pick(lang, "Who wants Furneq for their workshop", "РљС‚Рѕ С…РѕС‡РµС‚ РІРЅРµРґСЂРёС‚СЊ Furneq РІ СЃРІРѕР№ С†РµС…")}</h2>
             </div>
             <div className="workboard-stack">
               {pilotInbox.length ? (
@@ -442,12 +541,44 @@ export default async function WorkboardPage({ searchParams }) {
               ) : (
                 <article className="work-item">
                   <div>
-                    <strong>{pick(lang, "No pilot requests yet", "Пока нет заявок на пилот")}</strong>
+                    <strong>{pick(lang, "No pilot requests yet", "РџРѕРєР° РЅРµС‚ Р·Р°СЏРІРѕРє РЅР° РїРёР»РѕС‚")}</strong>
                     <p>
                       {pick(
                         lang,
                         "Use the landing CTA and the bot pilot flow to collect the first workshop launch requests.",
-                        "Используйте CTA на landing и pilot flow в боте, чтобы собрать первые заявки на запуск от мебельных цехов."
+                        "РСЃРїРѕР»СЊР·СѓР№С‚Рµ CTA РЅР° landing Рё pilot flow РІ Р±РѕС‚Рµ, С‡С‚РѕР±С‹ СЃРѕР±СЂР°С‚СЊ РїРµСЂРІС‹Рµ Р·Р°СЏРІРєРё РЅР° Р·Р°РїСѓСЃРє РѕС‚ РјРµР±РµР»СЊРЅС‹С… С†РµС…РѕРІ."
+                      )}
+                    </p>
+                  </div>
+                </article>
+              )}
+            </div>
+          </article>
+        ) : null}
+        {showLaunches ? (
+          <article className="panel workboard-panel">
+            <div className="section-title">
+              <p className="eyebrow">{pick(lang, "Launches", "Запуски")}</p>
+              <h2>{pick(lang, "Who is moving from sold pilot to live customer", "Кто уже переходит из продажи в живой запуск")}</h2>
+            </div>
+            <div className="workboard-stack">
+              {launchInbox.length ? (
+                launchInbox.map((item) => (
+                  <ProductLaunchEntry
+                    item={item}
+                    key={item.id || item.launchNumber}
+                    lang={lang}
+                  />
+                ))
+              ) : (
+                <article className="work-item">
+                  <div>
+                    <strong>{pick(lang, "No launches yet", "Пока нет запусков")}</strong>
+                    <p>
+                      {pick(
+                        lang,
+                        "As soon as a pilot request is marked as won, Furneq will create a launch handoff here.",
+                        "Как только pilot request переводится в sold, Furneq создаёт здесь handoff на запуск."
                       )}
                     </p>
                   </div>
@@ -460,8 +591,8 @@ export default async function WorkboardPage({ searchParams }) {
         {showTasks ? (
           <article className="panel workboard-panel">
             <div className="section-title">
-              <p className="eyebrow">{pick(lang, "Estimate", "Расчёт")}</p>
-              <h2>{pick(lang, "Pricing and quote tasks", "Задачи по расчёту и КП")}</h2>
+              <p className="eyebrow">{pick(lang, "Estimate", "Р Р°СЃС‡С‘С‚")}</p>
+              <h2>{pick(lang, "Pricing and quote tasks", "Р—Р°РґР°С‡Рё РїРѕ СЂР°СЃС‡С‘С‚Сѓ Рё РљРџ")}</h2>
             </div>
             <div className="workboard-stack">
               {data.taskQueue.map((item) => (
@@ -478,7 +609,7 @@ export default async function WorkboardPage({ searchParams }) {
                   <div className="work-meta">
                     <span>{item.owner}</span>
                     <strong>
-                      {translateScheduleText(item.deadline, lang, "Not scheduled", "Не назначено")}
+                      {translateScheduleText(item.deadline, lang, "Not scheduled", "РќРµ РЅР°Р·РЅР°С‡РµРЅРѕ")}
                     </strong>
                     <em>{translateTaskLane(item.lane, lang)}</em>
                   </div>
@@ -491,8 +622,8 @@ export default async function WorkboardPage({ searchParams }) {
         {showMeasurements ? (
           <article className="panel workboard-panel">
             <div className="section-title">
-              <p className="eyebrow">{pick(lang, "Appointments", "Замеры")}</p>
-              <h2>{pick(lang, "Upcoming visits", "Ближайшие выезды")}</h2>
+              <p className="eyebrow">{pick(lang, "Appointments", "Р—Р°РјРµСЂС‹")}</p>
+              <h2>{pick(lang, "Upcoming visits", "Р‘Р»РёР¶Р°Р№С€РёРµ РІС‹РµР·РґС‹")}</h2>
             </div>
             <div className="workboard-stack">
               {upcomingMeasurements.map((item) => (
@@ -512,7 +643,7 @@ export default async function WorkboardPage({ searchParams }) {
                   <div className="work-meta">
                     <span>{formatAppointmentType(item.type, lang)}</span>
                     <strong>
-                      {translateScheduleText(item.scheduledAt, lang, "Not scheduled", "Не назначено")}
+                      {translateScheduleText(item.scheduledAt, lang, "Not scheduled", "РќРµ РЅР°Р·РЅР°С‡РµРЅРѕ")}
                     </strong>
                     <em>{formatAppointmentStatus(item.status, lang)}</em>
                   </div>
@@ -525,8 +656,8 @@ export default async function WorkboardPage({ searchParams }) {
         {showFollowups ? (
           <article className="panel workboard-panel">
             <div className="section-title">
-              <p className="eyebrow">{pick(lang, "Follow-ups", "Возвраты")}</p>
-              <h2>{pick(lang, "Who needs a callback", "Кого нужно вернуть в контакт")}</h2>
+              <p className="eyebrow">{pick(lang, "Follow-ups", "Р’РѕР·РІСЂР°С‚С‹")}</p>
+              <h2>{pick(lang, "Who needs a callback", "РљРѕРіРѕ РЅСѓР¶РЅРѕ РІРµСЂРЅСѓС‚СЊ РІ РєРѕРЅС‚Р°РєС‚")}</h2>
             </div>
             <div className="workboard-stack">
               {data.followups.map((item) => (
@@ -546,7 +677,7 @@ export default async function WorkboardPage({ searchParams }) {
                         item.note,
                         lang,
                         "Open the deal card to review the follow-up details.",
-                        "Откройте сделку, чтобы посмотреть детали возврата."
+                        "РћС‚РєСЂРѕР№С‚Рµ СЃРґРµР»РєСѓ, С‡С‚РѕР±С‹ РїРѕСЃРјРѕС‚СЂРµС‚СЊ РґРµС‚Р°Р»Рё РІРѕР·РІСЂР°С‚Р°."
                       )}
                     </p>
                     <FollowupCompleteButton
@@ -559,7 +690,7 @@ export default async function WorkboardPage({ searchParams }) {
                   <div className="work-meta">
                     <span>{item.owner}</span>
                     <strong>
-                      {translateScheduleText(item.scheduledAt, lang, "Not scheduled", "Не назначено")}
+                      {translateScheduleText(item.scheduledAt, lang, "Not scheduled", "РќРµ РЅР°Р·РЅР°С‡РµРЅРѕ")}
                     </strong>
                     <em>{translateFollowupType(item.type, lang)}</em>
                   </div>
@@ -572,8 +703,8 @@ export default async function WorkboardPage({ searchParams }) {
         {showAlerts ? (
           <article className="panel workboard-panel">
             <div className="section-title">
-              <p className="eyebrow">{pick(lang, "Risks", "Риски")}</p>
-              <h2>{pick(lang, "Signals that need attention", "Сигналы, где нужен контроль")}</h2>
+              <p className="eyebrow">{pick(lang, "Risks", "Р РёСЃРєРё")}</p>
+              <h2>{pick(lang, "Signals that need attention", "РЎРёРіРЅР°Р»С‹, РіРґРµ РЅСѓР¶РµРЅ РєРѕРЅС‚СЂРѕР»СЊ")}</h2>
             </div>
             <div className="workboard-stack">
               {data.alerts.map((item) => (
@@ -593,7 +724,7 @@ export default async function WorkboardPage({ searchParams }) {
                         item.detail,
                         lang,
                         "Open the deal card to review the latest signal.",
-                        "Откройте сделку, чтобы посмотреть подробности сигнала."
+                        "РћС‚РєСЂРѕР№С‚Рµ СЃРґРµР»РєСѓ, С‡С‚РѕР±С‹ РїРѕСЃРјРѕС‚СЂРµС‚СЊ РїРѕРґСЂРѕР±РЅРѕСЃС‚Рё СЃРёРіРЅР°Р»Р°."
                       )}
                     </p>
                   </div>
@@ -619,3 +750,4 @@ export default async function WorkboardPage({ searchParams }) {
     </main>
   );
 }
+
