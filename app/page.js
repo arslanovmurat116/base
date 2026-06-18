@@ -55,6 +55,26 @@ function OfferCard({ title, text, features, href, hrefLabel, accent = false }) {
   );
 }
 
+function DemoDealCard({ stage, title, text, points, href, hrefLabel }) {
+  return (
+    <article className="panel demo-deal-card">
+      <p className="eyebrow">{stage}</p>
+      <h3>{title}</h3>
+      <p>{text}</p>
+      <div className="offer-feature-list demo-deal-points">
+        {points.map((point) => (
+          <span className="offer-feature" key={point}>
+            {point}
+          </span>
+        ))}
+      </div>
+      <Link className="ghost-link offer-card-action" href={href}>
+        {hrefLabel}
+      </Link>
+    </article>
+  );
+}
+
 export default async function HomePage() {
   const lang = await getLanguage();
   const locale = getLocale(lang);
@@ -198,6 +218,57 @@ export default async function HomePage() {
     }
   ];
 
+  const showcaseDeals = [
+    {
+      stage: pick(lang, "Scenario 1", "Сценарий 1"),
+      title: pick(lang, "New kitchen request", "Новая заявка на кухню"),
+      text: pick(
+        lang,
+        "Use this card to show how a fresh lead lands in CRM, gets the first action and moves toward a measurement.",
+        "Используй эту карточку, чтобы показать, как новая заявка попадает в CRM, получает первый шаг и двигается к замеру."
+      ),
+      points: [
+        pick(lang, "Inbound request", "Входящая заявка"),
+        pick(lang, "First contact", "Первичный контакт"),
+        pick(lang, "Next step", "Следующий шаг")
+      ],
+      href: "/leads/l-201#deal-summary",
+      hrefLabel: pick(lang, "Open new request", "Открыть новую заявку")
+    },
+    {
+      stage: pick(lang, "Scenario 2", "Сценарий 2"),
+      title: pick(lang, "Estimate and project", "Расчёт и проект"),
+      text: pick(
+        lang,
+        "Open the order where measurements, estimate, files and payment conversation are already in motion.",
+        "Открой заказ, где уже живут замер, расчёт, файлы проекта и разговор про оплату."
+      ),
+      points: [
+        pick(lang, "Estimate block", "Блок расчёта"),
+        pick(lang, "Project files", "Проектные файлы"),
+        pick(lang, "Client context", "Контекст клиента")
+      ],
+      href: "/leads/l-202#deal-estimate",
+      hrefLabel: pick(lang, "Open estimate demo", "Открыть демо расчёта")
+    },
+    {
+      stage: pick(lang, "Scenario 3", "Сценарий 3"),
+      title: pick(lang, "Deposit and production", "Предоплата и производство"),
+      text: pick(
+        lang,
+        "Finish the pitch with the live order that already reached production and workshop control.",
+        "Заверши показ на живом заказе, который уже дошёл до производства и контроля цеха."
+      ),
+      points: [
+        pick(lang, "Deposit status", "Статус предоплаты"),
+        pick(lang, "Production stage", "Этап производства"),
+        pick(lang, "Installation context", "Контекст установки")
+      ],
+      href: "/leads/l-206#deal-production",
+      hrefLabel: pick(lang, "Open production demo", "Открыть демо производства")
+    }
+  ];
+
   return (
     <main className="page-shell landing-shell">
       <section className="hero-panel product-hero">
@@ -306,6 +377,24 @@ export default async function HomePage() {
               title={step.title}
               text={step.text}
             />
+          ))}
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="section-title">
+          <p className="eyebrow">{pick(lang, "Demo states", "Состояния для показа")}</p>
+          <h2>
+            {pick(
+              lang,
+              "Open the right order instead of explaining the system by hand.",
+              "Открывай нужный заказ вместо того, чтобы объяснять систему руками."
+            )}
+          </h2>
+        </div>
+        <div className="demo-deal-grid">
+          {showcaseDeals.map((deal) => (
+            <DemoDealCard key={deal.href} {...deal} />
           ))}
         </div>
       </section>

@@ -1196,6 +1196,7 @@ select {
 .roadmap-grid,
 .sales-grid,
 .demo-step-grid,
+.demo-deal-grid,
 .offer-grid {
   display: grid;
   gap: 18px;
@@ -1230,6 +1231,11 @@ select {
   margin-top: 18px;
 }
 
+.demo-deal-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
 .offer-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -1240,6 +1246,7 @@ select {
 .roadmap-card,
 .sales-card,
 .demo-step-card,
+.demo-deal-card,
 .offer-card {
   padding: 22px;
   border-radius: 28px;
@@ -1258,6 +1265,7 @@ select {
 .roadmap-card h3,
 .sales-card h3,
 .demo-step-card h3,
+.demo-deal-card h3,
 .offer-card h3 {
   margin: 0;
 }
@@ -1267,6 +1275,7 @@ select {
 .roadmap-card h3,
 .sales-card h3,
 .demo-step-card h3,
+.demo-deal-card h3,
 .offer-card h3 {
   font-family: var(--font-display), Georgia, serif;
   font-size: 1.35rem;
@@ -1278,11 +1287,22 @@ select {
 .roadmap-card p,
 .sales-card p,
 .demo-step-card p,
+.demo-deal-card p,
 .offer-card p,
 .plan-note {
   margin: 12px 0 0;
   color: var(--muted);
   line-height: 1.7;
+}
+
+.demo-deal-card {
+  background:
+    linear-gradient(180deg, rgba(255, 250, 244, 0.96), rgba(248, 239, 228, 0.92));
+  border: 1px solid rgba(200, 109, 52, 0.12);
+}
+
+.demo-deal-points {
+  margin-top: 14px;
 }
 
 .demo-step-index {
@@ -1417,6 +1437,7 @@ select {
   .roadmap-grid,
   .sales-grid,
   .demo-step-grid,
+  .demo-deal-grid,
   .offer-grid,
   .project-preview-grid,
   .source-grid,
