@@ -15,7 +15,8 @@
     "telegram:webhook:set": "node scripts/telegram-webhook.mjs set",
     "telegram:webhook:delete": "node scripts/telegram-webhook.mjs delete",
     "telegram:me": "node scripts/telegram-webhook.mjs me",
-    "telegram:commands:set": "node scripts/telegram-webhook.mjs commands"
+    "telegram:commands:set": "node scripts/telegram-webhook.mjs commands",
+    "cleanup:demo-state": "node scripts/cleanup-demo-state.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.4.0",
