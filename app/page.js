@@ -6,6 +6,7 @@ import { getLanguage } from "../lib/i18n-server";
 const TELEGRAM_BOT_BASE_HREF = "https://t.me/mebel_rdn_bot";
 const OPEN_BOT_HREF = `${TELEGRAM_BOT_BASE_HREF}?start=demo`;
 const START_REQUEST_HREF = `${TELEGRAM_BOT_BASE_HREF}?start=request`;
+const START_PILOT_HREF = `${TELEGRAM_BOT_BASE_HREF}?start=pilot`;
 
 function StatCard({ label, value, note }) {
   return (
@@ -180,8 +181,8 @@ export default async function HomePage() {
         pick(lang, "Deals, visits and follow-ups", "Сделки, замеры и возвраты"),
         pick(lang, "Estimate and project files", "Смета и проектные файлы")
       ],
-      href: "/leads/l-202",
-      hrefLabel: pick(lang, "Open sample deal", "Открыть пример сделки"),
+      href: START_PILOT_HREF,
+      hrefLabel: pick(lang, "Request pilot launch", "Запросить запуск пилота"),
       accent: true
     },
     {
@@ -298,9 +299,9 @@ export default async function HomePage() {
             <a className="ghost-link" href={START_REQUEST_HREF} rel="noreferrer" target="_blank">
               {pick(lang, "Start client request", "Запустить заявку клиента")}
             </a>
-            <Link className="ghost-link" href="/leads/l-202">
-              {pick(lang, "Open sample deal", "Открыть пример сделки")}
-            </Link>
+            <a className="ghost-link" href={START_PILOT_HREF} rel="noreferrer" target="_blank">
+              {pick(lang, "Request pilot launch", "Запросить запуск пилота")}
+            </a>
           </div>
 
           <div className="hero-proof-row">
@@ -424,11 +425,14 @@ export default async function HomePage() {
           </p>
         </div>
         <div className="cta-actions">
-          <a className="primary-link" href={OPEN_BOT_HREF} rel="noreferrer" target="_blank">
-            {pick(lang, "Launch bot demo", "Запустить демо в боте")}
+          <a className="primary-link" href={START_PILOT_HREF} rel="noreferrer" target="_blank">
+            {pick(lang, "Request pilot launch", "Запросить запуск пилота")}
           </a>
           <a className="ghost-link" href={START_REQUEST_HREF} rel="noreferrer" target="_blank">
             {pick(lang, "Start client request", "Запустить заявку клиента")}
+          </a>
+          <a className="ghost-link" href={OPEN_BOT_HREF} rel="noreferrer" target="_blank">
+            {pick(lang, "Launch bot demo", "Запустить демо в боте")}
           </a>
         </div>
       </section>
