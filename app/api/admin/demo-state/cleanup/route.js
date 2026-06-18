@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cleanupDemoState } from "../../../../../lib/demo-state-cleanup.js";
+import { reloadMockPersistentState } from "../../../../../lib/server-data.js";
 
 function getAuthorizedTokens() {
   return [
@@ -71,6 +72,10 @@ export async function POST(request) {
     keepChatIds,
     keepOrderNumbers
   });
+
+  if (summary.applyChanges) {
+    await reloadMockPersistentState();
+  }
 
   return NextResponse.json({
     ok: true,
