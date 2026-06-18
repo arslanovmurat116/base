@@ -2,9 +2,19 @@ import { NextResponse } from "next/server";
 import { getDashboardData } from "../../../lib/server-data";
 
 export async function GET() {
-  const data = await getDashboardData();
-  return NextResponse.json({
-    ok: true,
-    data
-  });
+  try {
+    const data = await getDashboardData();
+    return NextResponse.json({
+      ok: true,
+      data
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: error.message || "Dashboard API failed"
+      },
+      { status: 500 }
+    );
+  }
 }

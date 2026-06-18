@@ -2,32 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-const PROJECT_STATUS_OPTIONS = [
-  "Черновик",
-  "После замера собираем проект",
-  "Эскиз и смета в работе",
-  "Проект отправлен клиенту",
-  "Проект согласован",
-  "Проект утверждён"
-];
-
-const PREPAYMENT_STATUS_OPTIONS = [
-  "Не запрошена",
-  "Запрошена",
-  "Ожидаем предоплату",
-  "Предоплата получена"
-];
-
-const FINAL_PAYMENT_STATUS_OPTIONS = [
-  "Финальная оплата не запрошена",
-  "Ждём окончательную оплату",
-  "Оплачено полностью"
-];
-
-function withCurrentValue(options, value) {
-  return value && !options.includes(value) ? [value, ...options] : options;
-}
+import { pick } from "../lib/i18n";
+import {
+  FINAL_PAYMENT_STATUS_OPTIONS,
+  PREPAYMENT_STATUS_OPTIONS,
+  PROJECT_STATUS_OPTIONS,
+  normalizeStatusValue
+} from "../lib/order-statuses";
 
 function createEmptyOrderItem(index = 0) {
   return {
@@ -40,7 +21,7 @@ function createEmptyOrderItem(index = 0) {
     facade: "",
     hardware: "",
     amount: "",
-    status: "Черновик"
+    status: "Draft"
   };
 }
 
@@ -59,18 +40,36 @@ function normalizeInitialItems(items = []) {
     facade: item.facade || "",
     hardware: item.hardware || "",
     amount: item.amount || "",
-    status: item.status || "Черновик"
+    status: item.status || "Draft"
   }));
+}
+
+function OptionSelect({ label, options, value, onChange, lang }) {
+  return (
+    <label className="field-block">
+      <span>{label}</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map((item) => (
+          <option key={item.value} value={item.value}>
+            {pick(lang, item.en, item.ru)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 }
 
 export default function LeadOrderContextForm({
   slug,
   initialProject = {},
   initialCalculation = {},
-  initialItems = []
+  initialItems = [],
+  lang = "en"
 }) {
   const router = useRouter();
-  const [projectStatus, setProjectStatus] = useState(initialProject.status || "Черновик");
+  const [projectStatus, setProjectStatus] = useState(
+    normalizeStatusValue(PROJECT_STATUS_OPTIONS, initialProject.status, "draft")
+  );
   const [description, setDescription] = useState(initialProject.description || "");
   const [materials, setMaterials] = useState(initialProject.materials || "");
   const [hardware, setHardware] = useState(initialProject.hardware || "");
@@ -82,10 +81,10 @@ export default function LeadOrderContextForm({
   const [prepaymentAmount, setPrepaymentAmount] = useState(initialCalculation.prepaymentAmount || "");
   const [balanceDue, setBalanceDue] = useState(initialCalculation.balanceDue || "");
   const [prepaymentStatus, setPrepaymentStatus] = useState(
-    initialCalculation.prepaymentStatus || "Не запрошена"
+    normalizeStatusValue(PREPAYMENT_STATUS_OPTIONS, initialCalculation.prepaymentStatus, "not-requested")
   );
   const [finalPaymentStatus, setFinalPaymentStatus] = useState(
-    initialCalculation.finalPaymentStatus || "Финальная оплата не запрошена"
+    normalizeStatusValue(FINAL_PAYMENT_STATUS_OPTIONS, initialCalculation.finalPaymentStatus, "not-requested")
   );
   const [orderItems, setOrderItems] = useState(normalizeInitialItems(initialItems));
   const [pending, setPending] = useState(false);
@@ -148,72 +147,60 @@ export default function LeadOrderContextForm({
         })
       });
 
-      const result = await response.json();
-      setFeedback(result.message || "Проект, расчёт и состав заказа сохранены");
+      const result = await response.json().catch(() => null);
 
-      if (response.ok) {
-        router.refresh();
+      if (!response.ok) {
+        throw new Error(result?.message || pick(lang, "Failed to save project context", "Не удалось сохранить проектный блок"));
       }
+
+      setFeedback(pick(lang, "Project, estimate and order items saved", "Проект, смета и состав заказа сохранены"));
+      router.refresh();
     } catch (error) {
-      setFeedback(`Ошибка формы: ${error.message}`);
+      setFeedback(`${pick(lang, "Form error", "Ошибка формы")}: ${error.message}`);
     } finally {
       setPending(false);
     }
   }
 
-  const projectStatusOptions = withCurrentValue(PROJECT_STATUS_OPTIONS, projectStatus);
-  const prepaymentStatusOptions = withCurrentValue(PREPAYMENT_STATUS_OPTIONS, prepaymentStatus);
-  const finalPaymentStatusOptions = withCurrentValue(
-    FINAL_PAYMENT_STATUS_OPTIONS,
-    finalPaymentStatus
-  );
-
   return (
     <section className="panel workflow-form-panel">
       <div className="section-title">
-        <p className="eyebrow">Проект и расчёт</p>
-        <h2>Обновить проектную часть заказа</h2>
-        <p>
-          Здесь менеджер или проектировщик фиксирует рабочее описание проекта, материалы,
-          суммы и сам состав заказа, чтобы карточка жила вместе с реальной сметой.
-        </p>
+        <p className="eyebrow">{pick(lang, "Project and estimate", "Проект и смета")}</p>
+        <h2>{pick(lang, "Update project context", "Обновить проектный блок")}</h2>
       </div>
 
       <form className="workflow-form" onSubmit={handleSubmit}>
         <div className="lead-detail-grid" style={{ marginTop: 0 }}>
-          <label className="field-block">
-            <span>Статус проекта</span>
-            <select value={projectStatus} onChange={(event) => setProjectStatus(event.target.value)}>
-              {projectStatusOptions.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
+          <OptionSelect
+            label={pick(lang, "Project status", "Статус проекта")}
+            options={PROJECT_STATUS_OPTIONS}
+            value={projectStatus}
+            onChange={setProjectStatus}
+            lang={lang}
+          />
 
           <label className="field-block">
-            <span>Дата подготовки проекта</span>
+            <span>{pick(lang, "Project prepared at", "Дата подготовки проекта")}</span>
             <input
               type="text"
               value={preparedAt}
               onChange={(event) => setPreparedAt(event.target.value)}
-              placeholder="Например: Сегодня, 16:40"
+              placeholder={pick(lang, "For example: Today, 16:40", "Например: Сегодня, 16:40")}
             />
           </label>
 
           <label className="field-block">
-            <span>Материалы</span>
+            <span>{pick(lang, "Materials", "Материалы")}</span>
             <input
               type="text"
               value={materials}
               onChange={(event) => setMaterials(event.target.value)}
-              placeholder="ЛДСП Egger, МДФ и т.д."
+              placeholder={pick(lang, "Egger chipboard, MDF, veneer...", "ЛДСП Egger, МДФ, шпон...")}
             />
           </label>
 
           <label className="field-block">
-            <span>Фурнитура</span>
+            <span>{pick(lang, "Hardware", "Фурнитура")}</span>
             <input
               type="text"
               value={hardware}
@@ -223,150 +210,138 @@ export default function LeadOrderContextForm({
           </label>
 
           <label className="field-block">
-            <span>Цвет</span>
+            <span>{pick(lang, "Color", "Цвет")}</span>
             <input
               type="text"
               value={color}
               onChange={(event) => setColor(event.target.value)}
-              placeholder="Белый мат, дуб, графит..."
+              placeholder={pick(lang, "White matte, oak, graphite...", "Белый мат, дуб, графит...")}
             />
           </label>
 
-          <label className="field-block">
-            <span>Статус предоплаты</span>
-            <select
-              value={prepaymentStatus}
-              onChange={(event) => setPrepaymentStatus(event.target.value)}
-            >
-              {prepaymentStatusOptions.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
+          <OptionSelect
+            label={pick(lang, "Deposit status", "Статус предоплаты")}
+            options={PREPAYMENT_STATUS_OPTIONS}
+            value={prepaymentStatus}
+            onChange={setPrepaymentStatus}
+            lang={lang}
+          />
 
           <label className="field-block">
-            <span>Предварительная сумма</span>
+            <span>{pick(lang, "Preliminary amount", "Предварительная сумма")}</span>
             <input
               type="text"
               value={preliminaryAmount}
               onChange={(event) => setPreliminaryAmount(event.target.value)}
-              placeholder="Например: 1 800 000 ₸"
+              placeholder={pick(lang, "For example: 1 800 000 KZT", "Например: 1 800 000 ₸")}
             />
           </label>
 
           <label className="field-block">
-            <span>Итоговая сумма</span>
+            <span>{pick(lang, "Final amount", "Итоговая сумма")}</span>
             <input
               type="text"
               value={finalAmount}
               onChange={(event) => setFinalAmount(event.target.value)}
-              placeholder="Например: 1 950 000 ₸"
+              placeholder={pick(lang, "For example: 1 950 000 KZT", "Например: 1 950 000 ₸")}
             />
           </label>
 
           <label className="field-block">
-            <span>Сумма предоплаты</span>
+            <span>{pick(lang, "Deposit amount", "Сумма предоплаты")}</span>
             <input
               type="text"
               value={prepaymentAmount}
               onChange={(event) => setPrepaymentAmount(event.target.value)}
-              placeholder="Например: 585 000 ₸"
+              placeholder={pick(lang, "For example: 585 000 KZT", "Например: 585 000 ₸")}
             />
           </label>
 
           <label className="field-block">
-            <span>Остаток к оплате</span>
+            <span>{pick(lang, "Balance due", "Остаток к оплате")}</span>
             <input
               type="text"
               value={balanceDue}
               onChange={(event) => setBalanceDue(event.target.value)}
-              placeholder="Например: 1 365 000 ₸"
+              placeholder={pick(lang, "For example: 1 365 000 KZT", "Например: 1 365 000 ₸")}
             />
           </label>
 
-          <label className="field-block">
-            <span>Статус окончательной оплаты</span>
-            <select
-              value={finalPaymentStatus}
-              onChange={(event) => setFinalPaymentStatus(event.target.value)}
-            >
-              {finalPaymentStatusOptions.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
+          <OptionSelect
+            label={pick(lang, "Final payment status", "Статус финальной оплаты")}
+            options={FINAL_PAYMENT_STATUS_OPTIONS}
+            value={finalPaymentStatus}
+            onChange={setFinalPaymentStatus}
+            lang={lang}
+          />
         </div>
 
         <label className="field-block">
-          <span>Описание проекта</span>
+          <span>{pick(lang, "Project description", "Описание проекта")}</span>
           <textarea
             rows={4}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="Что делаем по заказу, какие зоны и какой состав мебели уже подтверждён."
+            placeholder={pick(
+              lang,
+              "What is included in the order, which zones are confirmed, and what should go into the estimate.",
+              "Что входит в заказ, какие зоны подтверждены и что нужно включить в смету."
+            )}
           />
         </label>
 
         <label className="field-block">
-          <span>Комментарий проектировщика</span>
+          <span>{pick(lang, "Designer note", "Комментарий проектировщика")}</span>
           <textarea
             rows={4}
             value={designerComment}
             onChange={(event) => setDesignerComment(event.target.value)}
-            placeholder="Что важно учесть в проекте, где есть ограничения и что ещё ждём от клиента."
+            placeholder={pick(
+              lang,
+              "Constraints, pending decisions, materials to confirm, or anything the team should know.",
+              "Ограничения, незакрытые решения, материалы на подтверждении и важные замечания для команды."
+            )}
           />
         </label>
 
         <div className="section-title" style={{ marginTop: 8 }}>
-          <p className="eyebrow">Состав заказа</p>
-          <h2>Позиции сметы и заказа</h2>
-          <p>
-            Каждая позиция из этого списка сразу попадает в смету и помогает держать под
-            контролем не только сумму, но и сам состав мебели по зонам.
-          </p>
+          <p className="eyebrow">{pick(lang, "Order items", "Состав заказа")}</p>
+          <h2>{pick(lang, "Estimate positions", "Позиции сметы")}</h2>
         </div>
 
         <div className="compact-list">
           {orderItems.map((item, index) => (
             <article className="summary-card" key={item.id || `item-${index}`}>
               <div className="mini-item-head">
-                <strong>{item.title || `Позиция ${index + 1}`}</strong>
-                <button
-                  className="ghost-button"
-                  onClick={() => removeOrderItem(index)}
-                  type="button"
-                >
-                  Удалить
+                <strong>{item.title || pick(lang, `Item ${index + 1}`, `Позиция ${index + 1}`)}</strong>
+                <button className="ghost-button" onClick={() => removeOrderItem(index)} type="button">
+                  {pick(lang, "Remove", "Удалить")}
                 </button>
               </div>
 
               <div className="lead-detail-grid" style={{ marginTop: 16 }}>
                 <label className="field-block">
-                  <span>Название</span>
+                  <span>{pick(lang, "Title", "Название")}</span>
                   <input
                     type="text"
                     value={item.title}
                     onChange={(event) => updateOrderItem(index, "title", event.target.value)}
-                    placeholder="Например: Встроенный шкаф"
+                    placeholder={pick(lang, "Built-in wardrobe", "Встроенный шкаф")}
                   />
                 </label>
 
                 <label className="field-block">
-                  <span>Зона</span>
+                  <span>{pick(lang, "Zone", "Зона")}</span>
                   <input
                     type="text"
                     value={item.zone}
                     onChange={(event) => updateOrderItem(index, "zone", event.target.value)}
-                    placeholder="Спальня, кухня, прихожая..."
+                    placeholder={pick(lang, "Bedroom, kitchen, hall...", "Спальня, кухня, прихожая...")}
                   />
                 </label>
 
                 <label className="field-block">
-                  <span>Количество</span>
+                  <span>{pick(lang, "Quantity", "Количество")}</span>
                   <input
                     type="number"
                     min="1"
@@ -377,57 +352,57 @@ export default function LeadOrderContextForm({
                 </label>
 
                 <label className="field-block">
-                  <span>Сумма</span>
+                  <span>{pick(lang, "Amount", "Сумма")}</span>
                   <input
                     type="text"
                     value={item.amount}
                     onChange={(event) => updateOrderItem(index, "amount", event.target.value)}
-                    placeholder="Например: 650 000 ₸"
+                    placeholder={pick(lang, "For example: 650 000 KZT", "Например: 650 000 ₸")}
                   />
                 </label>
 
                 <label className="field-block">
-                  <span>Статус</span>
+                  <span>{pick(lang, "Status", "Статус")}</span>
                   <input
                     type="text"
                     value={item.status}
                     onChange={(event) => updateOrderItem(index, "status", event.target.value)}
-                    placeholder="Черновик / Согласовано / В производстве"
+                    placeholder={pick(lang, "Draft / Approved / In production", "Черновик / Согласовано / В производстве")}
                   />
                 </label>
 
                 <label className="field-block">
-                  <span>Размеры</span>
+                  <span>{pick(lang, "Dimensions", "Размеры")}</span>
                   <input
                     type="text"
                     value={item.dimensions}
                     onChange={(event) => updateOrderItem(index, "dimensions", event.target.value)}
-                    placeholder="Например: 3200 x 2600 x 600"
+                    placeholder="3200 x 2600 x 600"
                   />
                 </label>
 
                 <label className="field-block">
-                  <span>Материал</span>
+                  <span>{pick(lang, "Material", "Материал")}</span>
                   <input
                     type="text"
                     value={item.material}
                     onChange={(event) => updateOrderItem(index, "material", event.target.value)}
-                    placeholder="ЛДСП Egger, МДФ..."
+                    placeholder={pick(lang, "Egger chipboard, MDF...", "ЛДСП Egger, МДФ...")}
                   />
                 </label>
 
                 <label className="field-block">
-                  <span>Фасады</span>
+                  <span>{pick(lang, "Facades", "Фасады")}</span>
                   <input
                     type="text"
                     value={item.facade}
                     onChange={(event) => updateOrderItem(index, "facade", event.target.value)}
-                    placeholder="Крашеный МДФ, шпон..."
+                    placeholder={pick(lang, "Painted MDF, veneer...", "Крашеный МДФ, шпон...")}
                   />
                 </label>
 
                 <label className="field-block">
-                  <span>Фурнитура</span>
+                  <span>{pick(lang, "Hardware", "Фурнитура")}</span>
                   <input
                     type="text"
                     value={item.hardware}
@@ -442,13 +417,13 @@ export default function LeadOrderContextForm({
 
         <div className="workflow-actions">
           <button className="ghost-button" onClick={addOrderItem} type="button">
-            Добавить позицию
+            {pick(lang, "Add item", "Добавить позицию")}
           </button>
         </div>
 
         <div className="workflow-actions">
           <button className="primary-button" disabled={pending} type="submit">
-            {pending ? "Сохраняем..." : "Сохранить проект, смету и состав"}
+            {pending ? pick(lang, "Saving...", "Сохраняем...") : pick(lang, "Save project context", "Сохранить проектный блок")}
           </button>
           {feedback ? <p className="form-feedback">{feedback}</p> : null}
         </div>

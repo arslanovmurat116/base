@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { pick } from "../lib/i18n";
 
-export default function TaskCompleteButton({ title }) {
+export default function TaskCompleteButton({ title, lang = "en" }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -23,13 +24,13 @@ export default function TaskCompleteButton({ title }) {
       });
 
       const result = await response.json();
-      setFeedback(result.message || "Задача закрыта");
+      setFeedback(result.message || pick(lang, "Task closed", "Задача закрыта"));
 
       if (response.ok) {
         router.refresh();
       }
     } catch (error) {
-      setFeedback(`Ошибка: ${error.message}`);
+      setFeedback(`${pick(lang, "Error", "Ошибка")}: ${error.message}`);
     } finally {
       setPending(false);
     }
@@ -41,12 +42,12 @@ export default function TaskCompleteButton({ title }) {
         className="inline-note-input"
         disabled={pending}
         onChange={(event) => setNote(event.target.value)}
-        placeholder="Короткий итог по задаче"
+        placeholder={pick(lang, "Short completion note", "Короткий итог по задаче")}
         type="text"
         value={note}
       />
       <button className="ghost-button" disabled={pending} onClick={handleComplete} type="button">
-        {pending ? "Закрываем..." : "Закрыть задачу"}
+        {pending ? pick(lang, "Closing...", "Закрываем...") : pick(lang, "Close task", "Закрыть задачу")}
       </button>
       {feedback ? <small className="inline-feedback">{feedback}</small> : null}
     </div>

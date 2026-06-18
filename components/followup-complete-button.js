@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { pick } from "../lib/i18n";
 
-export default function FollowupCompleteButton({ lead, type, scheduledAt }) {
+export default function FollowupCompleteButton({ lead, type, scheduledAt, lang = "en" }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -23,13 +24,13 @@ export default function FollowupCompleteButton({ lead, type, scheduledAt }) {
       });
 
       const result = await response.json();
-      setFeedback(result.message || "Возврат закрыт");
+      setFeedback(result.message || pick(lang, "Follow-up closed", "Возврат закрыт"));
 
       if (response.ok) {
         router.refresh();
       }
     } catch (error) {
-      setFeedback(`Ошибка: ${error.message}`);
+      setFeedback(`${pick(lang, "Error", "Ошибка")}: ${error.message}`);
     } finally {
       setPending(false);
     }
@@ -41,12 +42,12 @@ export default function FollowupCompleteButton({ lead, type, scheduledAt }) {
         className="inline-note-input"
         disabled={pending}
         onChange={(event) => setNote(event.target.value)}
-        placeholder="Как завершили возврат"
+        placeholder={pick(lang, "How the follow-up ended", "Как завершили возврат")}
         type="text"
         value={note}
       />
       <button className="ghost-button" disabled={pending} onClick={handleComplete} type="button">
-        {pending ? "Закрываем..." : "Закрыть возврат"}
+        {pending ? pick(lang, "Closing...", "Закрываем...") : pick(lang, "Close follow-up", "Закрыть возврат")}
       </button>
       {feedback ? <small className="inline-feedback">{feedback}</small> : null}
     </div>

@@ -2,7 +2,44 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { pick } from "../lib/i18n";
 import { PROJECT_FILE_SLOTS, getProjectFileSlot } from "../lib/project-file-slots";
+
+const SLOT_TEXT = {
+  render: {
+    title: ["Project render", "Рендер проекта"],
+    uploadLabel: ["Preview: render", "Превью: рендер"]
+  },
+  model: {
+    title: ["3D model screenshot", "Скрин 3D-модели"],
+    uploadLabel: ["Preview: 3D model", "Превью: 3D-модель"]
+  },
+  drawings: {
+    title: ["Drawings and layout", "Чертежи и раскладка"],
+    uploadLabel: ["Preview: drawings", "Превью: чертежи"]
+  },
+  "estimate-preview": {
+    title: ["Estimate preview", "Превью сметы"],
+    uploadLabel: ["Preview: estimate", "Превью: смета"]
+  },
+  "source-project": {
+    title: ["Source project", "Исходник проекта"],
+    uploadLabel: ["Source project", "Исходник проекта"]
+  },
+  "estimate-excel": {
+    title: ["Estimate Excel", "Смета Excel"],
+    uploadLabel: ["Estimate Excel", "Смета Excel"]
+  },
+  "drawings-pdf": {
+    title: ["Drawings PDF", "PDF чертежей"],
+    uploadLabel: ["Drawings PDF", "PDF чертежей"]
+  }
+};
+
+function slotText(slot, lang, field) {
+  const copy = SLOT_TEXT[slot?.id]?.[field];
+  return copy ? pick(lang, copy[0], copy[1]) : slot?.[field] || "";
+}
 
 function createUploadRow(index = 0, overrides = {}) {
   return {
@@ -36,29 +73,15 @@ function suggestSlotIdForFile(file) {
   }
 
   if (mimeType.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(extension)) {
-    if (
-      fileName.includes("estimate") ||
-      fileName.includes("smeta") ||
-      fileName.includes("смет")
-    ) {
+    if (fileName.includes("estimate") || fileName.includes("smeta") || fileName.includes("смет")) {
       return "estimate-preview";
     }
 
-    if (
-      fileName.includes("draw") ||
-      fileName.includes("sheet") ||
-      fileName.includes("layout") ||
-      fileName.includes("черт") ||
-      fileName.includes("расклад")
-    ) {
+    if (fileName.includes("draw") || fileName.includes("sheet") || fileName.includes("layout") || fileName.includes("черт") || fileName.includes("расклад")) {
       return "drawings";
     }
 
-    if (
-      fileName.includes("model") ||
-      fileName.includes("3d") ||
-      fileName.includes("скрин")
-    ) {
+    if (fileName.includes("model") || fileName.includes("3d") || fileName.includes("скрин")) {
       return "model";
     }
 
@@ -72,7 +95,8 @@ export default function LeadProjectFilesForm({
   slug,
   initialProjectAssets = {},
   initialEstimateExport = {},
-  managerName = ""
+  managerName = "",
+  lang = "en"
 }) {
   const router = useRouter();
   const [version, setVersion] = useState(initialProjectAssets.version || "");
@@ -80,17 +104,14 @@ export default function LeadProjectFilesForm({
   const [uploadedBy, setUploadedBy] = useState(
     initialProjectAssets.uploadedBy || managerName || ""
   );
-  const [actuality, setActuality] = useState(initialProjectAssets.actuality || "Актуально");
+  const [actuality, setActuality] = useState(initialProjectAssets.actuality || pick(lang, "Actual", "Актуально"));
   const [sourceProgram, setSourceProgram] = useState(
-    initialProjectAssets.sourceProgram || "Внешняя проектная программа"
+    initialProjectAssets.sourceProgram || pick(lang, "External design software", "Внешняя проектная программа")
   );
   const [sheets, setSheets] = useState(
     Array.isArray(initialEstimateExport.sheets) ? initialEstimateExport.sheets.join(", ") : ""
   );
-  const [uploadRows, setUploadRows] = useState([
-    createUploadRow(0),
-    createUploadRow(1)
-  ]);
+  const [uploadRows, setUploadRows] = useState([createUploadRow(0), createUploadRow(1)]);
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [dragActiveRowId, setDragActiveRowId] = useState("");
@@ -174,7 +195,11 @@ export default function LeadProjectFilesForm({
     assignFilesToRows(files);
     setFeedback(
       files.length
-        ? `Файлы распределены по строкам: ${files.length}. Проверь слоты и загружай.`
+        ? pick(
+            lang,
+            `Files assigned to rows: ${files.length}. Check the slots and upload.`,
+            `Файлы распределены по строкам: ${files.length}. Проверь слоты и загружай.`
+          )
         : ""
     );
   }
@@ -216,7 +241,7 @@ export default function LeadProjectFilesForm({
         );
 
       if (!queue.length) {
-        setFeedback("Выбери хотя бы один файл для загрузки");
+        setFeedback(pick(lang, "Select at least one file", "Выбери хотя бы один файл для загрузки"));
         return;
       }
 
@@ -245,9 +270,9 @@ export default function LeadProjectFilesForm({
         const result = await response.json().catch(() => null);
 
         if (response.ok) {
-          success.push(item.slot?.title || item.row.slotId);
+          success.push(slotText(item.slot, lang, "title") || item.row.slotId);
         } else {
-          failed.push(result?.message || item.slot?.title || item.row.slotId);
+          failed.push(result?.message || slotText(item.slot, lang, "title") || item.row.slotId);
         }
       }
 
@@ -258,20 +283,26 @@ export default function LeadProjectFilesForm({
       }
 
       if (success.length && !failed.length) {
-        setFeedback(`Загружено файлов: ${success.length}`);
+        setFeedback(
+          pick(lang, `Uploaded files: ${success.length}`, `Загружено файлов: ${success.length}`)
+        );
         return;
       }
 
       if (success.length && failed.length) {
         setFeedback(
-          `Частично готово: загружено ${success.length}, с ошибкой ${failed.length}`
+          pick(
+            lang,
+            `Partially complete: ${success.length} uploaded, ${failed.length} failed`,
+            `Частично готово: загружено ${success.length}, с ошибкой ${failed.length}`
+          )
         );
         return;
       }
 
-      setFeedback(failed[0] || "Загрузка не выполнена");
+      setFeedback(failed[0] || pick(lang, "Upload failed", "Загрузка не выполнена"));
     } catch (error) {
-      setFeedback(`Ошибка загрузки: ${error.message}`);
+      setFeedback(`${pick(lang, "Upload error", "Ошибка загрузки")}: ${error.message}`);
     } finally {
       setPending(false);
     }
@@ -280,13 +311,15 @@ export default function LeadProjectFilesForm({
   return (
     <article className="summary-card project-file-upload-panel">
       <div className="mini-item-head">
-        <strong>Прикрепить файлы к сделке</strong>
-        <span className="status-chip">Пакетная загрузка</span>
+        <strong>{pick(lang, "Attach project files", "Прикрепить файлы проекта")}</strong>
+        <span className="status-chip">{pick(lang, "Batch upload", "Пакетная загрузка")}</span>
       </div>
       <p>
-        Здесь можно за один проход прикрепить сразу несколько файлов: превью, Excel,
-        PDF и исходник проекта. Менеджеру не нужно заходить в карточку по кругу для
-        каждого вложения отдельно.
+        {pick(
+          lang,
+          "Upload previews, Excel, PDF and the source file in one pass without reopening the deal card again and again.",
+          "Загрузи превью, Excel, PDF и исходник за один проход, без повторного открытия карточки сделки."
+        )}
       </p>
 
       <form
@@ -296,72 +329,72 @@ export default function LeadProjectFilesForm({
         onSubmit={handleSubmit}
       >
         <div className="project-upload-drop-hint">
-          <strong>Перетащи сюда сразу несколько файлов</strong>
-          <span>Форма сама разложит их по строкам, потом останется проверить слоты и загрузить.</span>
+          <strong>{pick(lang, "Drop several files here", "Перетащи сюда сразу несколько файлов")}</strong>
+          <span>{pick(lang, "The form will pre-fill the rows, then you only need to check and upload.", "Форма сама разложит их по строкам, потом останется проверить и загрузить.")}</span>
         </div>
 
         <div className="lead-detail-grid" style={{ marginTop: 0 }}>
           <label className="field-block">
-            <span>Версия</span>
+            <span>{pick(lang, "Version", "Версия")}</span>
             <input
               name="version"
               onChange={(event) => setVersion(event.target.value)}
-              placeholder="Например: Экспорт v2"
+              placeholder={pick(lang, "For example: Export v2", "Например: Экспорт v2")}
               type="text"
               value={version}
             />
           </label>
 
           <label className="field-block">
-            <span>Дата экспорта</span>
+            <span>{pick(lang, "Exported at", "Дата экспорта")}</span>
             <input
               name="exportedAt"
               onChange={(event) => setExportedAt(event.target.value)}
-              placeholder="Например: Сегодня, 16:40"
+              placeholder={pick(lang, "For example: Today, 16:40", "Например: Сегодня, 16:40")}
               type="text"
               value={exportedAt}
             />
           </label>
 
           <label className="field-block">
-            <span>Кто загрузил</span>
+            <span>{pick(lang, "Uploaded by", "Кто загрузил")}</span>
             <input
               name="uploadedBy"
               onChange={(event) => setUploadedBy(event.target.value)}
-              placeholder="Например: Проектировщик"
+              placeholder={pick(lang, "For example: Designer", "Например: Проектировщик")}
               type="text"
               value={uploadedBy}
             />
           </label>
 
           <label className="field-block">
-            <span>Актуальность</span>
+            <span>{pick(lang, "Actuality", "Актуальность")}</span>
             <input
               name="actuality"
               onChange={(event) => setActuality(event.target.value)}
-              placeholder="Актуально / Черновик / На согласовании"
+              placeholder={pick(lang, "Actual / Draft / Pending approval", "Актуально / Черновик / На согласовании")}
               type="text"
               value={actuality}
             />
           </label>
 
           <label className="field-block">
-            <span>Внешняя программа</span>
+            <span>{pick(lang, "External software", "Внешняя программа")}</span>
             <input
               name="sourceProgram"
               onChange={(event) => setSourceProgram(event.target.value)}
-              placeholder="Например: SketchUp + Excel"
+              placeholder="SketchUp + Excel"
               type="text"
               value={sourceProgram}
             />
           </label>
 
           <label className="field-block">
-            <span>Листы Excel</span>
+            <span>{pick(lang, "Excel sheets", "Листы Excel")}</span>
             <input
               name="sheets"
               onChange={(event) => setSheets(event.target.value)}
-              placeholder="Например: Data, Sum"
+              placeholder="Data, Sum"
               type="text"
               value={sheets}
             />
@@ -384,19 +417,15 @@ export default function LeadProjectFilesForm({
                 onDrop={(event) => handleRowDrop(event, row.id)}
               >
                 <div className="mini-item-head">
-                  <strong>{`Файл ${index + 1}`}</strong>
-                  <button
-                    className="ghost-button"
-                    onClick={() => removeRow(row.id)}
-                    type="button"
-                  >
-                    Удалить строку
+                  <strong>{pick(lang, `File ${index + 1}`, `Файл ${index + 1}`)}</strong>
+                  <button className="ghost-button" onClick={() => removeRow(row.id)} type="button">
+                    {pick(lang, "Remove row", "Удалить строку")}
                   </button>
                 </div>
 
                 <div className="lead-detail-grid" style={{ marginTop: 16 }}>
                   <label className="field-block">
-                    <span>Что прикрепляем</span>
+                    <span>{pick(lang, "Slot", "Что прикрепляем")}</span>
                     <select
                       onChange={(event) =>
                         updateRow(row.id, { slotId: event.target.value, fileName: "" })
@@ -405,14 +434,14 @@ export default function LeadProjectFilesForm({
                     >
                       {PROJECT_FILE_SLOTS.map((item) => (
                         <option key={item.id} value={item.id}>
-                          {item.uploadLabel}
+                          {slotText(item, lang, "uploadLabel")}
                         </option>
                       ))}
                     </select>
                   </label>
 
                   <label className="field-block">
-                    <span>Файл</span>
+                    <span>{pick(lang, "File", "Файл")}</span>
                     <input
                       accept={slot?.accept || "*"}
                       name={`file-${row.id}`}
@@ -430,12 +459,12 @@ export default function LeadProjectFilesForm({
                 </div>
 
                 <div className="project-upload-dropzone">
-                  <strong>Можно перетащить файл прямо сюда</strong>
-                  <span>{slot?.accept || "Любой формат"}</span>
+                  <strong>{pick(lang, "You can also drop the file here", "Можно перетащить файл прямо сюда")}</strong>
+                  <span>{slot?.accept || pick(lang, "Any format", "Любой формат")}</span>
                 </div>
 
                 <p className="compact-note">
-                  {row.fileName || slot?.title || "Файл пока не выбран"}
+                  {row.fileName || slotText(slot, lang, "title") || pick(lang, "No file selected yet", "Файл пока не выбран")}
                 </p>
               </article>
             );
@@ -444,10 +473,10 @@ export default function LeadProjectFilesForm({
 
         <div className="workflow-actions">
           <button className="ghost-button" onClick={addRow} type="button">
-            Добавить ещё файл
+            {pick(lang, "Add one more file", "Добавить ещё файл")}
           </button>
           <button className="primary-button" disabled={pending} type="submit">
-            {pending ? "Загружаем пакет..." : "Загрузить выбранные файлы"}
+            {pending ? pick(lang, "Uploading...", "Загружаем...") : pick(lang, "Upload selected files", "Загрузить выбранные файлы")}
           </button>
         </div>
         {feedback ? <p className="form-feedback">{feedback}</p> : null}

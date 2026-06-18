@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Lora, Manrope } from "next/font/google";
 import "./globals.css";
 import TopNav from "../components/top-nav";
+import { pick } from "../lib/i18n";
+import { getLanguage } from "../lib/i18n-server";
 
 const bodyFont = Manrope({
   subsets: ["latin", "cyrillic"],
@@ -15,26 +17,30 @@ const displayFont = Lora({
 });
 
 export const metadata = {
-  title: "Mebel RDN Mini App",
+  title: "Furneq",
   description:
-    "Telegram Mini App для мебельного бизнеса: заявки, консультация, дожим до предоплаты и контроль цеха по подписке."
+    "AI workflow for custom furniture orders: leads, measurements, estimates, production and team control."
 };
 
-export default function RootLayout({ children }) {
+export const dynamic = "force-dynamic";
+
+export default async function RootLayout({ children }) {
+  const lang = await getLanguage();
+
   return (
-    <html lang="ru">
+    <html lang={lang}>
       <body className={`${bodyFont.variable} ${displayFont.variable}`}>
         <div className="app-frame">
           <header className="topbar">
             <Link className="brand" href="/">
-              <span className="brand-mark">MR</span>
+              <span className="brand-mark">FQ</span>
               <div>
-                <strong>Mebel RDN Mini App</strong>
-                <small>Telegram-система для заявок, дожима до продажи и контроля мебельного цеха</small>
+                <strong>Furneq</strong>
+                <small>{pick(lang, "AI workspace for custom furniture orders", "AI-система для мебельных заказов")}</small>
               </div>
             </Link>
             <Suspense fallback={null}>
-              <TopNav />
+              <TopNav lang={lang} />
             </Suspense>
           </header>
           {children}

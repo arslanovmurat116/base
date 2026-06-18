@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { pick } from "../lib/i18n";
 
 export default function AppointmentCreateForm({
+  lang = "en",
   initialLead = "",
   initialOwner = "",
-  title = "Назначить замер",
-  description = "Зафиксируй замер, выезд в шоурум или консультацию, чтобы команда держала под контролем следующий шаг по сделке."
+  title,
+  description
 }) {
   const router = useRouter();
   const [lead, setLead] = useState(initialLead);
@@ -43,7 +45,7 @@ export default function AppointmentCreateForm({
       });
 
       const result = await response.json();
-      setFeedback(result.message || "Замер назначен");
+      setFeedback(result.message || pick(lang, "Appointment saved", "Замер назначен"));
 
       if (response.ok) {
         setScheduledAt("");
@@ -52,7 +54,7 @@ export default function AppointmentCreateForm({
         router.refresh();
       }
     } catch (error) {
-      setFeedback(`Ошибка формы: ${error.message}`);
+      setFeedback(`${pick(lang, "Form error", "Ошибка формы")}: ${error.message}`);
     } finally {
       setPending(false);
     }
@@ -61,38 +63,45 @@ export default function AppointmentCreateForm({
   return (
     <section className="panel workflow-form-panel">
       <div className="section-title">
-        <p className="eyebrow">Замер</p>
-        <h2>{title}</h2>
-        <p>{description}</p>
+        <p className="eyebrow">{pick(lang, "Appointment", "Замер")}</p>
+        <h2>{title || pick(lang, "Book an appointment", "Назначить замер")}</h2>
+        <p>
+          {description ||
+            pick(
+              lang,
+              "Create a measurement, showroom visit or consultation so the team sees the next step in one place.",
+              "Зафиксируй замер, выезд в шоурум или консультацию, чтобы команда держала под контролем следующий шаг по сделке."
+            )}
+        </p>
       </div>
 
       <form className="workflow-form" onSubmit={handleSubmit}>
         <div className="outcome-grid">
           <label className="field-block">
-            <span>Клиент</span>
+            <span>{pick(lang, "Client", "Клиент")}</span>
             <input onChange={(event) => setLead(event.target.value)} type="text" value={lead} />
           </label>
 
           <label className="field-block">
-            <span>Замерщик / ответственный</span>
+            <span>{pick(lang, "Owner / measurer", "Замерщик / ответственный")}</span>
             <input onChange={(event) => setOwner(event.target.value)} type="text" value={owner} />
           </label>
         </div>
 
         <div className="outcome-grid">
           <label className="field-block">
-            <span>Формат замера или встречи</span>
+            <span>{pick(lang, "Appointment type", "Формат замера или встречи")}</span>
             <select onChange={(event) => setType(event.target.value)} value={type}>
-              <option value="measurement">Замер на объекте</option>
-              <option value="showroom">Шоурум</option>
-              <option value="consultation">Консультация</option>
-              <option value="call">Созвон</option>
-              <option value="custom">Другое</option>
+              <option value="measurement">{pick(lang, "On-site measurement", "Замер на объекте")}</option>
+              <option value="showroom">{pick(lang, "Showroom", "Шоурум")}</option>
+              <option value="consultation">{pick(lang, "Consultation", "Консультация")}</option>
+              <option value="call">{pick(lang, "Call", "Созвон")}</option>
+              <option value="custom">{pick(lang, "Other", "Другое")}</option>
             </select>
           </label>
 
           <label className="field-block">
-            <span>Длительность, минут</span>
+            <span>{pick(lang, "Duration, minutes", "Длительность, минут")}</span>
             <input
               min="15"
               onChange={(event) => setDurationMinutes(event.target.value)}
@@ -104,7 +113,7 @@ export default function AppointmentCreateForm({
         </div>
 
         <label className="field-block">
-          <span>Дата и время</span>
+          <span>{pick(lang, "Date and time", "Дата и время")}</span>
           <input
             onChange={(event) => setScheduledAt(event.target.value)}
             type="datetime-local"
@@ -113,20 +122,20 @@ export default function AppointmentCreateForm({
         </label>
 
         <label className="field-block">
-          <span>Адрес или площадка</span>
+          <span>{pick(lang, "Address or location", "Адрес или площадка")}</span>
           <input
             onChange={(event) => setLocation(event.target.value)}
-            placeholder="Например: адрес объекта, шоурум, Zoom или телефонный созвон"
+            placeholder={pick(lang, "For example: site address, showroom, Zoom or phone call", "Например: адрес объекта, шоурум, Zoom или телефонный созвон")}
             type="text"
             value={location}
           />
         </label>
 
         <label className="field-block">
-          <span>Что важно по замеру</span>
+          <span>{pick(lang, "Notes for the visit", "Что важно по замеру")}</span>
           <textarea
             onChange={(event) => setNote(event.target.value)}
-            placeholder="Например: проверить нишу под технику, показать фасады, обсудить бюджет"
+            placeholder={pick(lang, "For example: check appliance niche, show finishes, discuss budget", "Например: проверить нишу под технику, показать фасады, обсудить бюджет")}
             rows={3}
             value={note}
           />
@@ -134,7 +143,7 @@ export default function AppointmentCreateForm({
 
         <div className="workflow-actions">
           <button className="primary-button" disabled={pending} type="submit">
-            {pending ? "Сохраняем..." : "Назначить замер"}
+            {pending ? pick(lang, "Saving...", "Сохраняем...") : pick(lang, "Save appointment", "Назначить замер")}
           </button>
           {feedback ? <p className="form-feedback">{feedback}</p> : null}
         </div>

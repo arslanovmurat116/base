@@ -108,6 +108,10 @@ select {
   flex-wrap: wrap;
 }
 
+.topnav-shell {
+  justify-content: flex-end;
+}
+
 .topnav a,
 .role-pill,
 .filter-pill,
@@ -142,6 +146,32 @@ select {
   border-color: transparent !important;
   color: #fff !important;
   box-shadow: 0 12px 28px rgba(180, 90, 40, 0.22);
+}
+
+.language-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 251, 246, 0.82);
+}
+
+.language-pill {
+  min-width: 48px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.language-pill-active {
+  background: linear-gradient(135deg, #d88243, #b45a28);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(180, 90, 40, 0.18);
 }
 
 .page-shell {
@@ -1080,12 +1110,65 @@ select {
 
 .product-hero {
   background:
-    radial-gradient(circle at top left, rgba(200, 109, 52, 0.18), transparent 34%),
-    linear-gradient(180deg, rgba(255, 250, 244, 0.94), rgba(244, 234, 219, 0.9));
+    radial-gradient(circle at top left, rgba(200, 109, 52, 0.2), transparent 34%),
+    radial-gradient(circle at 85% 18%, rgba(103, 119, 92, 0.12), transparent 20%),
+    linear-gradient(180deg, rgba(255, 250, 244, 0.96), rgba(244, 234, 219, 0.92));
 }
 
 .product-hero-aside {
   gap: 16px;
+}
+
+.product-hero .hero-copy h1 {
+  max-width: 10ch;
+}
+
+.feature-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.feature-list li::before,
+.hero-card-list li::before {
+  content: "•";
+  margin-right: 10px;
+  color: var(--accent);
+}
+
+.product-hero .hero-text strong {
+  color: var(--ink);
+}
+
+.hero-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.hero-flow-item {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(34, 32, 27, 0.08);
+  color: var(--ink);
+  font-size: 0.88rem;
+}
+
+.hero-card-list,
+.feature-list {
+  margin: 16px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.hero-card-list li + li,
+.feature-list li + li {
+  margin-top: 8px;
 }
 
 .value-grid,
@@ -1138,6 +1221,14 @@ select {
   margin: 0;
 }
 
+.value-card h3,
+.proof-card h3,
+.roadmap-card h3 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
 .value-card p,
 .proof-card p,
 .roadmap-card p,
@@ -1153,6 +1244,10 @@ select {
   font-family: var(--font-display), Georgia, serif;
   font-size: clamp(2rem, 3vw, 2.8rem);
   letter-spacing: -0.04em;
+}
+
+.plan-card-action {
+  margin-top: 22px;
 }
 
 .plan-feature-list {

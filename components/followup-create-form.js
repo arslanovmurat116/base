@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { pick } from "../lib/i18n";
 
 export default function FollowupCreateForm({
+  lang = "en",
   initialLead = "",
   initialOwner = "",
-  title = "Создать повторный контакт",
-  description = "Фиксируй повторный контакт сразу в системе, чтобы тёплые сделки не терялись после расчёта, замера или КП."
+  title,
+  description
 }) {
   const router = useRouter();
   const [lead, setLead] = useState(initialLead);
@@ -39,7 +41,7 @@ export default function FollowupCreateForm({
       });
 
       const result = await response.json();
-      setFeedback(result.message || "Повторный контакт создан");
+      setFeedback(result.message || pick(lang, "Follow-up created", "Повторный контакт создан"));
 
       if (response.ok) {
         setScheduledAt("");
@@ -47,7 +49,7 @@ export default function FollowupCreateForm({
         router.refresh();
       }
     } catch (error) {
-      setFeedback(`Ошибка формы: ${error.message}`);
+      setFeedback(`${pick(lang, "Form error", "Ошибка формы")}: ${error.message}`);
     } finally {
       setPending(false);
     }
@@ -56,45 +58,52 @@ export default function FollowupCreateForm({
   return (
     <section className="panel workflow-form-panel">
       <div className="section-title">
-        <p className="eyebrow">Возврат</p>
-        <h2>{title}</h2>
-        <p>{description}</p>
+        <p className="eyebrow">{pick(lang, "Follow-up", "Возврат")}</p>
+        <h2>{title || pick(lang, "Create a follow-up", "Создать повторный контакт")}</h2>
+        <p>
+          {description ||
+            pick(
+              lang,
+              "Create the next callback directly in the system so warm deals do not disappear after estimate, measurement or quote.",
+              "Фиксируй повторный контакт сразу в системе, чтобы тёплые сделки не терялись после расчёта, замера или КП."
+            )}
+        </p>
       </div>
 
       <form className="workflow-form" onSubmit={handleSubmit}>
         <label className="field-block">
-          <span>Клиент</span>
+          <span>{pick(lang, "Client", "Клиент")}</span>
           <input
             type="text"
             value={lead}
             onChange={(event) => setLead(event.target.value)}
-            placeholder="Например: Самат Р."
+            placeholder={pick(lang, "For example: Samat R.", "Например: Самат Р.")}
           />
         </label>
 
         <label className="field-block">
-          <span>Ответственный</span>
+          <span>{pick(lang, "Owner", "Ответственный")}</span>
           <input
             type="text"
             value={owner}
             onChange={(event) => setOwner(event.target.value)}
-            placeholder="Например: Тимур"
+            placeholder={pick(lang, "For example: Timur", "Например: Тимур")}
           />
         </label>
 
         <label className="field-block">
-          <span>Тип возврата</span>
+          <span>{pick(lang, "Follow-up type", "Тип возврата")}</span>
           <select value={type} onChange={(event) => setType(event.target.value)}>
-            <option value="call">Позвонить</option>
-            <option value="message">Написать</option>
-            <option value="proposal">Вернуться после расчёта</option>
-            <option value="meeting">Вернуться после замера</option>
-            <option value="custom">Другое</option>
+            <option value="call">{pick(lang, "Call", "Позвонить")}</option>
+            <option value="message">{pick(lang, "Message", "Написать")}</option>
+            <option value="proposal">{pick(lang, "After estimate", "Вернуться после расчёта")}</option>
+            <option value="meeting">{pick(lang, "After measurement", "Вернуться после замера")}</option>
+            <option value="custom">{pick(lang, "Other", "Другое")}</option>
           </select>
         </label>
 
         <label className="field-block">
-          <span>Дата и время</span>
+          <span>{pick(lang, "Date and time", "Дата и время")}</span>
           <input
             type="datetime-local"
             value={scheduledAt}
@@ -103,18 +112,18 @@ export default function FollowupCreateForm({
         </label>
 
         <label className="field-block">
-          <span>Что именно нужно сделать</span>
+          <span>{pick(lang, "What needs to be done", "Что именно нужно сделать")}</span>
           <textarea
             rows={4}
             value={note}
             onChange={(event) => setNote(event.target.value)}
-            placeholder="Например: пройтись по КП, снять вопрос по срокам установки, подтвердить замер"
+            placeholder={pick(lang, "For example: review the quote, clear installation timing, confirm the visit", "Например: пройтись по КП, снять вопрос по срокам установки, подтвердить замер")}
           />
         </label>
 
         <div className="workflow-actions">
           <button className="primary-button" disabled={pending} type="submit">
-            {pending ? "Создаём..." : "Создать возврат"}
+            {pending ? pick(lang, "Creating...", "Создаём...") : pick(lang, "Create follow-up", "Создать возврат")}
           </button>
           {feedback ? <p className="form-feedback">{feedback}</p> : null}
         </div>

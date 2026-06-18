@@ -2,16 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { pick } from "../lib/i18n";
 
-const STATUS_OPTIONS = [
-  { value: "SCHEDULED", label: "Назначено" },
-  { value: "CONFIRMED", label: "Подтверждено" },
-  { value: "COMPLETED", label: "Проведено" },
-  { value: "CANCELLED", label: "Отменено" },
-  { value: "NO_SHOW", label: "Не состоялось" }
-];
-
-export default function AppointmentStatusForm({ id, status: initialStatus }) {
+export default function AppointmentStatusForm({ id, lang = "en", status: initialStatus }) {
   const router = useRouter();
   const [status, setStatus] = useState(initialStatus || "SCHEDULED");
   const [note, setNote] = useState("");
@@ -39,7 +32,7 @@ export default function AppointmentStatusForm({ id, status: initialStatus }) {
       });
 
       const result = await response.json();
-      setFeedback(result.message || "Статус замера обновлён");
+      setFeedback(result.message || pick(lang, "Appointment updated", "Статус замера обновлён"));
 
       if (response.ok) {
         setNote("");
@@ -47,7 +40,7 @@ export default function AppointmentStatusForm({ id, status: initialStatus }) {
         router.refresh();
       }
     } catch (error) {
-      setFeedback(`Ошибка: ${error.message}`);
+      setFeedback(`${pick(lang, "Error", "Ошибка")}: ${error.message}`);
     } finally {
       setPending(false);
     }
@@ -61,7 +54,13 @@ export default function AppointmentStatusForm({ id, status: initialStatus }) {
         onChange={(event) => setStatus(event.target.value)}
         value={status}
       >
-        {STATUS_OPTIONS.map((item) => (
+        {[
+          { value: "SCHEDULED", label: pick(lang, "Scheduled", "Назначено") },
+          { value: "CONFIRMED", label: pick(lang, "Confirmed", "Подтверждено") },
+          { value: "COMPLETED", label: pick(lang, "Completed", "Проведено") },
+          { value: "CANCELLED", label: pick(lang, "Cancelled", "Отменено") },
+          { value: "NO_SHOW", label: pick(lang, "No-show", "Не состоялось") }
+        ].map((item) => (
           <option key={item.value} value={item.value}>
             {item.label}
           </option>
@@ -71,7 +70,7 @@ export default function AppointmentStatusForm({ id, status: initialStatus }) {
         className="inline-note-input"
         disabled={pending}
         onChange={(event) => setNote(event.target.value)}
-        placeholder="Что произошло по замеру или выезду"
+        placeholder={pick(lang, "What happened during the visit", "Что произошло по замеру или выезду")}
         type="text"
         value={note}
       />
@@ -79,12 +78,12 @@ export default function AppointmentStatusForm({ id, status: initialStatus }) {
         className="inline-note-input"
         disabled={pending}
         onChange={(event) => setRevenueAmount(event.target.value)}
-        placeholder="Предоплата после замера"
+        placeholder={pick(lang, "Deposit after the visit", "Предоплата после замера")}
         type="number"
         value={revenueAmount}
       />
       <button className="ghost-button" disabled={pending} type="submit">
-        {pending ? "Сохраняем..." : "Сохранить"}
+        {pending ? pick(lang, "Saving...", "Сохраняем...") : pick(lang, "Save", "Сохранить")}
       </button>
       {feedback ? <small className="inline-feedback">{feedback}</small> : null}
     </form>

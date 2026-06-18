@@ -5,11 +5,46 @@ import AppointmentStatusForm from "../../components/appointment-status-form";
 import AppointmentTemplateButton from "../../components/appointment-template-button";
 import FilterBar from "../../components/filter-bar";
 import { getLeadAppointmentHref } from "../../lib/lead-links";
+import { safeLocalizedText, translateDurationText, translateLocationText, translateScheduleText } from "../../lib/display-text";
+import { getLocale, pick } from "../../lib/i18n";
+import { getLanguage } from "../../lib/i18n-server";
 import { getAppointmentsData } from "../../lib/server-data";
 
 export const metadata = {
-  title: "Замеры | Mebel RDN CRM"
+  title: "Appointments | Furneq"
 };
+
+function formatAppointmentType(type, lang) {
+  switch (type) {
+    case "measurement":
+      return pick(lang, "Measurement", "Замер");
+    case "showroom":
+      return pick(lang, "Showroom", "Шоурум");
+    case "consultation":
+      return pick(lang, "Consultation", "Консультация");
+    case "call":
+      return pick(lang, "Call", "Созвон");
+    default:
+      return type || pick(lang, "Meeting", "Встреча");
+  }
+}
+
+function formatAppointmentStatus(status, lang) {
+  switch (status) {
+    case "SCHEDULED":
+      return pick(lang, "Scheduled", "Назначено");
+    case "CONFIRMED":
+      return pick(lang, "Confirmed", "Подтверждено");
+    case "COMPLETED":
+      return pick(lang, "Completed", "Проведено");
+    case "CANCELLED":
+      return pick(lang, "Cancelled", "Отменено");
+    case "NO_SHOW":
+      return pick(lang, "No-show", "Не состоялось");
+    default:
+      return status;
+  }
+}
 
 function MetricCard({ label, value, note, href }) {
   const content = (
@@ -20,50 +55,16 @@ function MetricCard({ label, value, note, href }) {
     </>
   );
 
-  if (href) {
-    return (
-      <Link className="focus-card focus-card-link" href={href}>
-        {content}
-      </Link>
-    );
-  }
-
-  return <article className="focus-card">{content}</article>;
+  return href ? (
+    <Link className="focus-card focus-card-link" href={href}>
+      {content}
+    </Link>
+  ) : (
+    <article className="focus-card">{content}</article>
+  );
 }
 
-function formatAppointmentType(type) {
-  switch (type) {
-    case "measurement":
-      return "Замер";
-    case "showroom":
-      return "Шоурум";
-    case "consultation":
-      return "Консультация";
-    case "call":
-      return "Созвон";
-    default:
-      return type || "Встреча";
-  }
-}
-
-function formatAppointmentStatus(status) {
-  switch (status) {
-    case "SCHEDULED":
-      return "Назначено";
-    case "CONFIRMED":
-      return "Подтверждено";
-    case "COMPLETED":
-      return "Проведено";
-    case "CANCELLED":
-      return "Отменено";
-    case "NO_SHOW":
-      return "Не состоялось";
-    default:
-      return status;
-  }
-}
-
-function AppointmentCard({ item }) {
+function AppointmentCard({ item, lang }) {
   const href = getLeadAppointmentHref(item);
 
   return (
@@ -79,36 +80,43 @@ function AppointmentCard({ item }) {
           )}
         </h2>
         <span className={`status-chip status-chip-${String(item.status).toLowerCase()}`}>
-          {item.measurementStatus || formatAppointmentStatus(item.status)}
+          {formatAppointmentStatus(item.status, lang)}
         </span>
       </div>
 
-      <p>{item.measurementComment || item.note}</p>
-
       <div className="followup-meta">
         <span>{item.measurer || item.owner}</span>
-        <span>{formatAppointmentType(item.type)}</span>
-        <strong>{item.scheduledAt}</strong>
+        <span>{formatAppointmentType(item.type, lang)}</span>
+        <strong>{translateScheduleText(item.scheduledAt, lang, "Not scheduled", "Не назначено")}</strong>
       </div>
 
       <div className="followup-meta">
-        <span>{item.duration}</span>
-        <span>{item.address || item.location}</span>
+        <span>{translateDurationText(item.duration, lang, item.duration, item.duration)}</span>
+        <span>{translateLocationText(item.address || item.location, lang)}</span>
       </div>
 
-      {item.measurementResult || item.outcomeNote || item.prepaymentAmount ? (
+      {item.measurementResult || item.prepaymentAmount ? (
         <div className="followup-meta">
-          <span>{item.measurementResult || item.outcomeNote || "Итог замера пока не зафиксирован"}</span>
-          <span>{item.prepaymentAmount || (item.revenueAmount ? `${item.revenueAmount} ₸` : "Без предоплаты")}</span>
+          <span>
+            {item.measurementResult
+              ? safeLocalizedText(
+                  item.measurementResult,
+                  lang,
+                  "Measurement result is saved in the deal card.",
+                  "Результат замера сохранён в карточке сделки."
+                )
+              : pick(lang, "Result pending", "Итог пока не зафиксирован")}
+          </span>
+          <span>{item.prepaymentAmount || pick(lang, "No deposit yet", "Без предоплаты")}</span>
         </div>
       ) : null}
 
-      <AppointmentStatusForm id={item.id} status={item.status} />
+      <AppointmentStatusForm id={item.id} lang={lang} status={item.status} />
 
       {item.status === "SCHEDULED" ? (
         <AppointmentTemplateButton
           id={item.id}
-          label="Отправить подтверждение"
+          label={pick(lang, "Send confirmation", "Отправить подтверждение")}
           templateKey="booking-confirmation"
         />
       ) : null}
@@ -116,18 +124,18 @@ function AppointmentCard({ item }) {
       {["SCHEDULED", "CONFIRMED"].includes(item.status) ? (
         <AppointmentTemplateButton
           id={item.id}
-          label="Предложить перенос"
+          label={pick(lang, "Offer reschedule", "Предложить перенос")}
           templateKey="reschedule"
         />
       ) : null}
 
       {["SCHEDULED", "CONFIRMED"].includes(item.status) ? (
-        <AppointmentReminderButton id={item.id} />
+        <AppointmentReminderButton id={item.id} lang={lang} />
       ) : null}
 
       {href ? (
         <Link className="ghost-link" href={href}>
-          Открыть сделку
+          {pick(lang, "Open deal", "Открыть сделку")}
         </Link>
       ) : null}
     </article>
@@ -136,186 +144,96 @@ function AppointmentCard({ item }) {
 
 function sortByDateAsc(items) {
   return [...items].sort((first, second) => {
-    const firstDate = first.scheduledAtIso
-      ? new Date(first.scheduledAtIso).getTime()
-      : Number.MAX_SAFE_INTEGER;
-    const secondDate = second.scheduledAtIso
-      ? new Date(second.scheduledAtIso).getTime()
-      : Number.MAX_SAFE_INTEGER;
+    const firstDate = first.scheduledAtIso ? new Date(first.scheduledAtIso).getTime() : Number.MAX_SAFE_INTEGER;
+    const secondDate = second.scheduledAtIso ? new Date(second.scheduledAtIso).getTime() : Number.MAX_SAFE_INTEGER;
     return firstDate - secondDate;
   });
 }
 
 export default async function AppointmentsPage({ searchParams }) {
+  const lang = await getLanguage();
+  const locale = getLocale(lang);
   const resolved = await searchParams;
   const statusFilter = resolved?.status || "all";
   const appointments = await getAppointmentsData();
 
-  const filtered = appointments.filter((item) =>
-    statusFilter === "all" ? true : item.status === statusFilter
-  );
-
+  const filtered = appointments.filter((item) => (statusFilter === "all" ? true : item.status === statusFilter));
   const now = Date.now();
   const upcoming = sortByDateAsc(
     appointments.filter((item) =>
       item.scheduledAtIso
-        ? new Date(item.scheduledAtIso).getTime() >= now &&
-          !["COMPLETED", "CANCELLED", "NO_SHOW"].includes(item.status)
+        ? new Date(item.scheduledAtIso).getTime() >= now && !["COMPLETED", "CANCELLED", "NO_SHOW"].includes(item.status)
         : false
     )
   );
-  const toConfirm = sortByDateAsc(
-    appointments.filter((item) => item.status === "SCHEDULED")
-  );
+  const toConfirm = sortByDateAsc(appointments.filter((item) => item.status === "SCHEDULED"));
   const confirmed = appointments.filter((item) => item.status === "CONFIRMED");
-  const noShow = appointments.filter((item) => item.status === "NO_SHOW");
-  const revenue = appointments.reduce(
-    (sum, item) => sum + Number(item.revenueAmount || 0),
-    0
-  );
+  const revenue = appointments.reduce((sum, item) => sum + Number(item.revenueAmount || 0), 0);
 
   return (
     <main className="page-shell">
       <section className="page-heading">
-        <p className="eyebrow">Замеры</p>
-        <h1>Замеры, выезды и консультации под контролем</h1>
+        <p className="eyebrow">{pick(lang, "Appointments", "Замеры")}</p>
+        <h1>{pick(lang, "Measurements, visits and consultations", "Замеры, выезды и консультации")}</h1>
         <p>
-          Для мебельного бизнеса замер и встреча с клиентом — это не мелкий
-          вспомогательный этап, а точка, где сделка либо ускоряется, либо
-          рассыпается. Здесь весь контур подтверждений и итогов собран в одном
-          месте.
+          {pick(
+            lang,
+            "Use one board for booking, confirmation, visit result and follow-up after the meeting.",
+            "Один экран для записи, подтверждения, результата выезда и возврата после встречи."
+          )}
         </p>
       </section>
 
       <FilterBar
-        title="Статус замера / выезда"
+        title={pick(lang, "Appointment status", "Статус замера")}
         paramKey="status"
         options={[
-          { value: "all", label: "Все" },
-          { value: "SCHEDULED", label: "Назначено" },
-          { value: "CONFIRMED", label: "Подтверждено" },
-          { value: "COMPLETED", label: "Проведено" },
-          { value: "NO_SHOW", label: "Не состоялось" }
+          { value: "all", label: pick(lang, "All", "Все") },
+          { value: "SCHEDULED", label: pick(lang, "Scheduled", "Назначено") },
+          { value: "CONFIRMED", label: pick(lang, "Confirmed", "Подтверждено") },
+          { value: "COMPLETED", label: pick(lang, "Completed", "Проведено") },
+          { value: "NO_SHOW", label: pick(lang, "No-show", "Не состоялось") }
         ]}
       />
 
       <section className="focus-grid">
         <MetricCard
-          label="Ближайшие замеры"
+          label={pick(lang, "Upcoming", "Ближайшие")}
           value={String(upcoming.length)}
-          note="Все замеры, шоурум и консультации, где команда уже близко к следующему шагу."
+          note={pick(lang, "Scheduled measurements and visits ahead.", "Назначенные замеры и выезды впереди.")}
         />
         <MetricCard
-          label="Ждут подтверждения"
+          label={pick(lang, "To confirm", "Ждут подтверждения")}
           value={String(toConfirm.length)}
-          note="Слоты, по которым клиенту ещё нужно напомнить или подтвердить адрес."
+          note={pick(lang, "Slots that still need a final confirmation.", "Слоты, которые ещё нужно подтвердить.")}
         />
         <MetricCard
-          label="Подтверждено"
+          label={pick(lang, "Confirmed", "Подтверждено")}
           value={String(confirmed.length)}
-          note="Выезды и встречи, которые уже закреплены в календаре."
+          note={pick(lang, "Visits already locked in the calendar.", "Выезды, уже закреплённые в календаре.")}
         />
         <MetricCard
-          label="Проведено на сумму"
-          value={`${new Intl.NumberFormat("ru-RU").format(revenue)} ₸`}
-          note="Предоплата и суммы, которые уже зафиксированы после выезда."
+          label={pick(lang, "Visit revenue", "Выручка по визитам")}
+          value={`${new Intl.NumberFormat(locale).format(revenue)} ₸`}
+          note={pick(lang, "Money already fixed after appointments.", "Суммы, уже зафиксированные после выездов.")}
         />
-      </section>
-
-      <section className="dashboard-grid">
-        <div className="panel workboard-panel">
-          <div className="section-title">
-            <p className="eyebrow">Подтверждение</p>
-            <h2>Что нужно дожать до факта выезда</h2>
-            <p>
-              Это список слотов, где менеджеру важно не забыть про адрес,
-              подтверждение времени, шоурум или напоминание перед выездом.
-            </p>
-          </div>
-
-          <div className="workboard-stack">
-            {toConfirm.length ? (
-              toConfirm.map((item) => (
-                <article className="work-item" key={item.id}>
-                  <div>
-                    <strong>
-                      {getLeadAppointmentHref(item) ? (
-                        <Link className="work-item-link" href={getLeadAppointmentHref(item)}>
-                          {item.lead}
-                        </Link>
-                      ) : (
-                        item.lead
-                      )}
-                    </strong>
-                    <p>{item.note}</p>
-                  </div>
-                  <div className="work-meta">
-                    <span>{formatAppointmentType(item.type)}</span>
-                    <strong>{item.scheduledAt}</strong>
-                    <em>{formatAppointmentStatus(item.status)}</em>
-                  </div>
-                </article>
-              ))
-            ) : (
-              <article className="timeline-empty">
-                Сейчас нет замеров и выездов, которым не хватает подтверждения.
-              </article>
-            )}
-          </div>
-        </div>
-
-        <div className="panel workboard-panel">
-          <div className="section-title">
-            <p className="eyebrow">Срывы</p>
-            <h2>Где нужна быстрая реакция после неявки</h2>
-            <p>
-              Если клиент не доехал до встречи, его важно быстро вернуть в
-              контакт, пока интерес ещё живой и сделка не ушла в тишину.
-            </p>
-          </div>
-
-          <div className="workboard-stack">
-            {noShow.length ? (
-              noShow.map((item) => (
-                <article className="work-item" key={item.id}>
-                  <div>
-                    <strong>
-                      {getLeadAppointmentHref(item) ? (
-                        <Link className="work-item-link" href={getLeadAppointmentHref(item)}>
-                          {item.lead}
-                        </Link>
-                      ) : (
-                        item.lead
-                      )}
-                    </strong>
-                    <p>{item.outcomeNote || item.note}</p>
-                  </div>
-                  <div className="work-meta">
-                    <span>{item.owner}</span>
-                    <strong>{item.scheduledAt}</strong>
-                    <em>{formatAppointmentStatus(item.status)}</em>
-                  </div>
-                </article>
-              ))
-            ) : (
-              <article className="timeline-empty">
-                Сейчас нет встреч, которые сорвались или требуют спасения.
-              </article>
-            )}
-          </div>
-        </div>
       </section>
 
       <section className="lead-workflow-row">
         <AppointmentCreateForm
-          title="Назначить замер или консультацию"
-          description="Этот блок нужен, чтобы менеджер быстро фиксировал замер, выезд в шоурум или консультацию прямо в системе, а не в хаотичных переписках."
+          lang={lang}
+          title={pick(lang, "Book a measurement or consultation", "Назначить замер или консультацию")}
+          description={pick(
+            lang,
+            "Create the next meeting directly in the system, with time, owner, format and notes for the team.",
+            "Зафиксируй следующую встречу прямо в системе: время, формат, ответственного и комментарии для команды."
+          )}
         />
       </section>
 
       <section className="followup-list">
         {filtered.map((item) => (
-          <AppointmentCard key={item.id} item={item} />
+          <AppointmentCard key={item.id} item={item} lang={lang} />
         ))}
       </section>
     </main>

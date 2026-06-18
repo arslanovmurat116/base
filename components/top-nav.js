@@ -2,10 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navItems } from "../lib/mock-data";
+import LanguageToggle from "./language-toggle";
 
-export default function TopNav() {
+export default function TopNav({ lang = "en" }) {
   const pathname = usePathname();
+  const navItems = [
+    { href: "/", label: lang === "ru" ? "Главная" : "Home" },
+    { href: "/workboard", label: lang === "ru" ? "Смена" : "Workboard" },
+    { href: "/leads", label: lang === "ru" ? "Сделки" : "Deals" },
+    { href: "/appointments", label: lang === "ru" ? "Замеры" : "Appointments" }
+  ];
 
   return (
     <div className="topnav-shell">
@@ -28,6 +34,7 @@ export default function TopNav() {
           </Link>
         ))}
       </nav>
+      <LanguageToggle lang={lang} />
     </div>
   );
 }

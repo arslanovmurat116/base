@@ -2,29 +2,31 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { pick } from "../lib/i18n";
 
-function formatStatusLabel(status) {
+function formatStatusLabel(status, lang) {
   switch (status) {
     case "NEW":
-      return "Новая заявка";
+      return pick(lang, "New lead", "Новая заявка");
     case "CONTACTED":
-      return "Связаться";
+      return pick(lang, "Contact", "Связаться");
     case "QUALIFIED":
-      return "Расчёт стоимости";
+      return pick(lang, "Estimate", "Расчёт стоимости");
     case "MEETING":
-      return "Замер назначен";
+      return pick(lang, "Measurement booked", "Замер назначен");
     case "PROPOSAL":
-      return "Согласование";
+      return pick(lang, "Approval", "Согласование");
     case "WON":
-      return "Предоплата получена";
+      return pick(lang, "Deposit received", "Предоплата получена");
     case "LOST":
-      return "Отказ";
+      return pick(lang, "Lost", "Отказ");
     default:
       return status;
   }
 }
 
 export default function LeadWorkflowForm({
+  lang = "en",
   slug,
   initialStatus,
   initialNextAction,
@@ -58,13 +60,13 @@ export default function LeadWorkflowForm({
       });
 
       const result = await response.json();
-      setFeedback(result.message || "Изменения сохранены");
+      setFeedback(result.message || pick(lang, "Changes saved", "Изменения сохранены"));
 
       if (response.ok) {
         router.refresh();
       }
     } catch (error) {
-      setFeedback(`Ошибка формы: ${error.message}`);
+      setFeedback(`${pick(lang, "Form error", "Ошибка формы")}: ${error.message}`);
     } finally {
       setPending(false);
     }
@@ -73,50 +75,51 @@ export default function LeadWorkflowForm({
   return (
     <section className="panel workflow-form-panel">
       <div className="section-title">
-        <p className="eyebrow">Этап сделки</p>
-        <h2>Обновить статус и следующий шаг</h2>
+        <p className="eyebrow">{pick(lang, "Deal stage", "Этап сделки")}</p>
+        <h2>{pick(lang, "Update status and next step", "Обновить статус и следующий шаг")}</h2>
         <p>
-          Этот блок нужен, чтобы менеджер не держал следующий шаг “в голове”.
-          Здесь мы фиксируем, на каком этапе реально стоит мебельная сделка:
-          нужно ли ещё связаться, назначить замер, подготовить расчёт,
-          согласовать решение или дойти до предоплаты.
+          {pick(
+            lang,
+            "Use this block to keep the next step visible: contact, measurement, estimate, approval or deposit.",
+            "Этот блок нужен, чтобы менеджер не держал следующий шаг в голове: контакт, замер, расчёт, согласование или предоплата."
+          )}
         </p>
       </div>
 
       <form className="workflow-form" onSubmit={handleSubmit}>
         <label className="field-block">
-          <span>Статус сделки</span>
+          <span>{pick(lang, "Deal status", "Статус сделки")}</span>
           <select value={status} onChange={(event) => setStatus(event.target.value)}>
             {statusOptions.map((item) => (
               <option key={item} value={item}>
-                {formatStatusLabel(item)}
+                {formatStatusLabel(item, lang)}
               </option>
             ))}
           </select>
         </label>
 
         <label className="field-block">
-          <span>Следующий шаг</span>
+          <span>{pick(lang, "Next step", "Следующий шаг")}</span>
           <textarea
             rows={4}
             value={nextAction}
             onChange={(event) => setNextAction(event.target.value)}
-            placeholder="Например: подтвердить адрес замера, выдать расчёт, обсудить предоплату"
+            placeholder={pick(lang, "For example: confirm address, send estimate, discuss deposit", "Например: подтвердить адрес замера, выдать расчёт, обсудить предоплату")}
           />
         </label>
 
         <label className="field-block">
-          <span>Причина потери</span>
+          <span>{pick(lang, "Loss reason", "Причина потери")}</span>
           <input
             type="text"
             value={lossReason}
             onChange={(event) => setLossReason(event.target.value)}
-            placeholder="Нужно только если переводим сделку в потерю"
+            placeholder={pick(lang, "Only needed if the deal is lost", "Нужно только если переводим сделку в потерю")}
           />
         </label>
 
         <label className="field-block">
-          <span>Когда вернуться к клиенту</span>
+          <span>{pick(lang, "Follow up at", "Когда вернуться к клиенту")}</span>
           <input
             type="datetime-local"
             value={followupAt}
@@ -126,7 +129,7 @@ export default function LeadWorkflowForm({
 
         <div className="workflow-actions">
           <button className="primary-button" disabled={pending} type="submit">
-            {pending ? "Сохраняем..." : "Сохранить изменения"}
+            {pending ? pick(lang, "Saving...", "Сохраняем...") : pick(lang, "Save changes", "Сохранить изменения")}
           </button>
           {feedback ? <p className="form-feedback">{feedback}</p> : null}
         </div>

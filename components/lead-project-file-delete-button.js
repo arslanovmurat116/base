@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { pick } from "../lib/i18n";
 
-export default function LeadProjectFileDeleteButton({ slug, slot, title }) {
+export default function LeadProjectFileDeleteButton({ slug, slot, title, lang = "en" }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
 
   async function handleDelete() {
-    const confirmed = window.confirm(`Удалить файл из слота «${title}»?`);
+    const confirmed = window.confirm(
+      pick(lang, `Delete file from slot "${title}"?`, `Удалить файл из слота «${title}»?`)
+    );
 
     if (!confirmed) {
       return;
@@ -30,7 +33,7 @@ export default function LeadProjectFileDeleteButton({ slug, slot, title }) {
 
       if (!response.ok) {
         const result = await response.json().catch(() => null);
-        throw new Error(result?.message || "Не удалось удалить файл");
+        throw new Error(result?.message || pick(lang, "Failed to delete file", "Не удалось удалить файл"));
       }
 
       router.refresh();
@@ -48,7 +51,7 @@ export default function LeadProjectFileDeleteButton({ slug, slot, title }) {
       onClick={handleDelete}
       type="button"
     >
-      {pending ? "Удаляем..." : "Удалить"}
+      {pending ? pick(lang, "Deleting...", "Удаляем...") : pick(lang, "Delete", "Удалить")}
     </button>
   );
 }
