@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 import FilterBar from "../../components/filter-bar";
+import CustomerSuccessStatusForm from "../../components/customer-success-status-form";
 import FollowupCompleteButton from "../../components/followup-complete-button";
 import PilotRequestStatusForm from "../../components/pilot-request-status-form";
 import ProductLaunchStatusForm from "../../components/product-launch-status-form";
@@ -183,6 +184,44 @@ function getProductLaunchStatusClassName(status) {
   }
 }
 
+function formatCustomerSuccessStatus(status, lang) {
+  switch (status) {
+    case "FIRST_WEEK":
+      return pick(lang, "First week", "Первая неделя");
+    case "ADOPTION_CHECK":
+      return pick(lang, "Adoption check", "Проверка внедрения");
+    case "EXPANSION":
+      return pick(lang, "Expansion", "Расширение");
+    case "RENEWAL_REVIEW":
+      return pick(lang, "Renewal review", "Продление");
+    case "RENEWED":
+      return pick(lang, "Renewed", "Продлено");
+    case "AT_RISK":
+      return pick(lang, "At risk", "Риск оттока");
+    default:
+      return status || pick(lang, "Success", "Удержание");
+  }
+}
+
+function getCustomerSuccessStatusClassName(status) {
+  switch (String(status || "").toUpperCase()) {
+    case "FIRST_WEEK":
+      return "status-chip status-chip-demo_booked";
+    case "ADOPTION_CHECK":
+      return "status-chip status-chip-contacted";
+    case "EXPANSION":
+      return "status-chip status-chip-pilot_active";
+    case "RENEWAL_REVIEW":
+      return "status-chip status-chip-qualified";
+    case "RENEWED":
+      return "status-chip status-chip-won";
+    case "AT_RISK":
+      return "status-chip status-chip-lost";
+    default:
+      return "status-chip";
+  }
+}
+
 function LeadEntry({ item, note, lang }) {
   const href = getLeadStatusHref(item.slug, item.status);
 
@@ -308,6 +347,53 @@ function ProductLaunchEntry({ item, lang }) {
   );
 }
 
+function CustomerSuccessEntry({ item, lang }) {
+  const metaLine =
+    [item.city, item.teamSize].filter(Boolean).join(" • ") ||
+    pick(lang, "Customer success", "Сопровождение");
+  const contactLine =
+    [item.contactName, item.phone].filter(Boolean).join(" • ") ||
+    pick(lang, "Contact details are missing.", "Контакт ещё не указан.");
+
+  return (
+    <article className="work-item">
+      <div>
+        <strong>{item.workshopName || item.successNumber}</strong>
+        <p>
+          {safeLocalizedText(
+            item.note,
+            lang,
+            "Keep the workshop active, collect adoption signals and move toward renewal.",
+            "Держите цех в работе, собирайте сигналы внедрения и ведите к продлению."
+          )}
+        </p>
+        {item.successNote ? (
+          <p className="pilot-internal-note">
+            {pick(lang, "Success note", "Заметка сопровождения")}: {item.successNote}
+          </p>
+        ) : null}
+        <CustomerSuccessStatusForm
+          currentNote={item.successNote || ""}
+          currentStatus={item.status || "FIRST_WEEK"}
+          lang={lang}
+          successId={item.id || item.successNumber}
+        />
+      </div>
+      <div className="work-meta">
+        <span>{item.successNumber}</span>
+        <strong>
+          {translateScheduleText(item.updatedAt || item.createdAt, lang, "Just now", "Только что")}
+        </strong>
+        <em className={getCustomerSuccessStatusClassName(item.status)}>
+          {formatCustomerSuccessStatus(item.status, lang)}
+        </em>
+        <em>{metaLine}</em>
+        <em>{contactLine}</em>
+      </div>
+    </article>
+  );
+}
+
 function getTaskHref(item) {
   const leadHref = getLeadTaskHref(item);
 
@@ -367,6 +453,7 @@ export default async function WorkboardPage({ searchParams }) {
 
   const pilotInbox = Array.isArray(data.pilotInbox) ? data.pilotInbox : [];
   const launchInbox = Array.isArray(data.launchInbox) ? data.launchInbox : [];
+  const successInbox = Array.isArray(data.successInbox) ? data.successInbox : [];
 
   const focus = [
     {
@@ -429,6 +516,15 @@ export default async function WorkboardPage({ searchParams }) {
         "Sold pilots that should now move through kickoff, setup and go-live.",
         "РџСЂРѕРґР°РЅРЅС‹Рµ РїРёР»РѕС‚С‹, РєРѕС‚РѕСЂС‹Рµ СѓР¶Рµ РЅСѓР¶РЅРѕ РїСЂРѕРІРµСЃС‚Рё С‡РµСЂРµР· kickoff, РЅР°СЃС‚СЂРѕР№РєСѓ Рё Р·Р°РїСѓСЃРє."
       )
+    },
+    {
+      label: pick(lang, "Customer success", "Удержание"),
+      value: String(successInbox.length),
+      note: pick(
+        lang,
+        "Live workshops that now need adoption checks and renewal control.",
+        "Запущенные цеха, которым теперь нужны внедрение, удержание и контроль продления."
+      )
     }
   ];
 
@@ -441,7 +537,8 @@ export default async function WorkboardPage({ searchParams }) {
         "/appointments",
         "/workboard?view=followups",
         "/workboard?view=pilots",
-        "/workboard?view=launches"
+        "/workboard?view=launches",
+        "/workboard?view=success"
       ][index] || "/workboard"
   }));
 
@@ -466,6 +563,7 @@ export default async function WorkboardPage({ searchParams }) {
   const showAlerts = view === "all" || view === "alerts";
   const showPilots = view === "all" || view === "pilots";
   const showLaunches = view === "all" || view === "launches";
+  const showSuccess = view === "all" || view === "success";
 
   return (
     <main className="page-shell">
@@ -493,7 +591,8 @@ export default async function WorkboardPage({ searchParams }) {
             { value: "followups", label: pick(lang, "Follow-ups", "Р’РѕР·РІСЂР°С‚С‹") },
             { value: "alerts", label: pick(lang, "Risks", "Р РёСЃРєРё") },
             { value: "pilots", label: pick(lang, "Pilots", "РџРёР»РѕС‚С‹") },
-            { value: "launches", label: pick(lang, "Launches", "Запуски") }
+            { value: "launches", label: pick(lang, "Launches", "Запуски") },
+            { value: "success", label: pick(lang, "Success", "Удержание") }
           ]}
         />
         <div className="focus-grid">
@@ -579,6 +678,39 @@ export default async function WorkboardPage({ searchParams }) {
                         lang,
                         "As soon as a pilot request is marked as won, Furneq will create a launch handoff here.",
                         "Как только pilot request переводится в sold, Furneq создаёт здесь handoff на запуск."
+                      )}
+                    </p>
+                  </div>
+                </article>
+              )}
+            </div>
+          </article>
+        ) : null}
+
+        {showSuccess ? (
+          <article className="panel workboard-panel">
+            <div className="section-title">
+              <p className="eyebrow">{pick(lang, "Success", "Удержание")}</p>
+              <h2>{pick(lang, "Who should stay active and renew", "Кого нужно удержать и довести до продления")}</h2>
+            </div>
+            <div className="workboard-stack">
+              {successInbox.length ? (
+                successInbox.map((item) => (
+                  <CustomerSuccessEntry
+                    item={item}
+                    key={item.id || item.successNumber}
+                    lang={lang}
+                  />
+                ))
+              ) : (
+                <article className="work-item">
+                  <div>
+                    <strong>{pick(lang, "No success loops yet", "Пока нет контуров удержания")}</strong>
+                    <p>
+                      {pick(
+                        lang,
+                        "As soon as a launch goes live, Furneq will create a retention loop here.",
+                        "Как только запуск перейдёт в live, Furneq создаст здесь контур удержания."
                       )}
                     </p>
                   </div>
