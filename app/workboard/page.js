@@ -125,6 +125,30 @@ function LeadEntry({ item, note, lang }) {
   );
 }
 
+function PilotRequestEntry({ item, lang }) {
+  const metaLine =
+    [item.city, item.teamSize].filter(Boolean).join(" • ") ||
+    pick(lang, "Pilot launch request", "Заявка на запуск пилота");
+  const contactLine =
+    [item.contactName, item.phone].filter(Boolean).join(" • ") ||
+    pick(lang, "Contact details are missing.", "Контакт ещё не указан.");
+
+  return (
+    <article className="work-item">
+      <div>
+        <strong>{item.workshopName || item.requestNumber}</strong>
+        <p>{safeLocalizedText(item.note, lang, "Open the pilot inbox and review the workshop pain point.", "Откройте pilot inbox и посмотрите, с какой болью пришёл цех.")}</p>
+      </div>
+      <div className="work-meta">
+        <span>{item.requestNumber}</span>
+        <strong>{translateScheduleText(item.createdAt, lang, "Just now", "Только что")}</strong>
+        <em>{metaLine}</em>
+        <em>{contactLine}</em>
+      </div>
+    </article>
+  );
+}
+
 function getTaskHref(item) {
   const leadHref = getLeadTaskHref(item);
 
@@ -166,6 +190,7 @@ export default async function WorkboardPage({ searchParams }) {
     getFollowupsData(),
     getAppointmentsData()
   ]);
+  const pilotInbox = Array.isArray(data.pilotInbox) ? data.pilotInbox : [];
 
   const focus = [
     {
@@ -187,12 +212,17 @@ export default async function WorkboardPage({ searchParams }) {
       label: pick(lang, "Follow-ups", "Повторный контакт"),
       value: String(followups.filter((item) => item.status === "PENDING").length),
       note: pick(lang, "Warm clients that should not be left without a callback.", "Тёплые клиенты, которых нельзя оставить без возврата.")
+    },
+    {
+      label: pick(lang, "Pilot launches", "Запуски пилота"),
+      value: String(pilotInbox.length),
+      note: pick(lang, "Workshop owners who asked to launch Furneq for their team.", "Владельцы цехов, которые уже запросили запуск Furneq под свой процесс.")
     }
   ];
 
   const linkedFocus = focus.map((item, index) => ({
     ...item,
-    href: ["/leads?status=NEW", "/workboard?view=estimates", "/appointments", "/workboard?view=followups"][index] || "/workboard"
+    href: ["/leads?status=NEW", "/workboard?view=estimates", "/appointments", "/workboard?view=followups", "/workboard?view=pilots"][index] || "/workboard"
   }));
 
   const upcomingMeasurements = [...appointments]
@@ -209,6 +239,7 @@ export default async function WorkboardPage({ searchParams }) {
   const showMeasurements = view === "all" || view === "measurements";
   const showFollowups = view === "all" || view === "followups";
   const showAlerts = view === "all" || view === "alerts";
+  const showPilots = view === "all" || view === "pilots";
 
   return (
     <main className="page-shell">
@@ -234,7 +265,8 @@ export default async function WorkboardPage({ searchParams }) {
             { value: "estimates", label: pick(lang, "Estimate", "Расчёт") },
             { value: "measurements", label: pick(lang, "Appointments", "Замеры") },
             { value: "followups", label: pick(lang, "Follow-ups", "Возвраты") },
-            { value: "alerts", label: pick(lang, "Risks", "Риски") }
+            { value: "alerts", label: pick(lang, "Risks", "Риски") },
+            { value: "pilots", label: pick(lang, "Pilots", "Пилоты") }
           ]}
         />
         <div className="focus-grid">
@@ -255,6 +287,35 @@ export default async function WorkboardPage({ searchParams }) {
               {data.urgentLeads.map((item) => (
                 <LeadEntry item={item} key={`${item.lead}-${item.deadline}`} lang={lang} note={item.source} />
               ))}
+            </div>
+          </article>
+        ) : null}
+
+        {showPilots ? (
+          <article className="panel workboard-panel">
+            <div className="section-title">
+              <p className="eyebrow">{pick(lang, "Pilots", "Пилоты")}</p>
+              <h2>{pick(lang, "Who wants Furneq for their workshop", "Кто хочет внедрить Furneq в свой цех")}</h2>
+            </div>
+            <div className="workboard-stack">
+              {pilotInbox.length ? (
+                pilotInbox.map((item) => (
+                  <PilotRequestEntry item={item} key={item.id || item.requestNumber} lang={lang} />
+                ))
+              ) : (
+                <article className="work-item">
+                  <div>
+                    <strong>{pick(lang, "No pilot requests yet", "Пока нет заявок на пилот")}</strong>
+                    <p>
+                      {pick(
+                        lang,
+                        "Use the landing CTA and the bot pilot flow to collect the first workshop launch requests.",
+                        "Используйте CTA на landing и pilot flow в боте, чтобы собрать первые заявки на запуск от мебельных цехов."
+                      )}
+                    </p>
+                  </div>
+                </article>
+              )}
             </div>
           </article>
         ) : null}

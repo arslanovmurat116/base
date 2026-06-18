@@ -3,6 +3,7 @@
 node_modules
 .mock-state
 .codex-logs
+.codex-tmp
 .next-dev-3004.err.log
 .next-dev-3004.out.log
 .codex-dev-3004.log
