@@ -1,6 +1,7 @@
 import Link from "next/link";
 import FilterBar from "../../components/filter-bar";
 import FollowupCompleteButton from "../../components/followup-complete-button";
+import PilotRequestStatusForm from "../../components/pilot-request-status-form";
 import TaskCompleteButton from "../../components/task-complete-button";
 import {
   getLeadAlertHref,
@@ -21,7 +22,12 @@ import {
   translateTaskTag,
   translateTaskTitle
 } from "../../lib/display-text";
-import { getAppointmentsData, getFollowupsData, getLeadsData, getWorkboardData } from "../../lib/server-data";
+import {
+  getAppointmentsData,
+  getFollowupsData,
+  getLeadsData,
+  getWorkboardData
+} from "../../lib/server-data";
 import { pick } from "../../lib/i18n";
 import { getLanguage } from "../../lib/i18n-server";
 
@@ -100,8 +106,47 @@ function formatAppointmentStatus(status, lang) {
   }
 }
 
+function formatPilotRequestStatus(status, lang) {
+  switch (status) {
+    case "NEW":
+      return pick(lang, "New", "Новая");
+    case "CONTACTED":
+      return pick(lang, "Contacted", "Связались");
+    case "DEMO_BOOKED":
+      return pick(lang, "Demo booked", "Демо назначено");
+    case "PILOT_ACTIVE":
+      return pick(lang, "Pilot active", "Пилот запущен");
+    case "WON":
+      return pick(lang, "Won", "Продано");
+    case "LOST":
+      return pick(lang, "Lost", "Потеряно");
+    default:
+      return status || pick(lang, "Pilot", "Пилот");
+  }
+}
+
+function getPilotStatusClassName(status) {
+  switch (String(status || "").toUpperCase()) {
+    case "NEW":
+      return "status-chip status-chip-new";
+    case "CONTACTED":
+      return "status-chip status-chip-contacted";
+    case "DEMO_BOOKED":
+      return "status-chip status-chip-demo_booked";
+    case "PILOT_ACTIVE":
+      return "status-chip status-chip-pilot_active";
+    case "WON":
+      return "status-chip status-chip-won";
+    case "LOST":
+      return "status-chip status-chip-lost";
+    default:
+      return "status-chip";
+  }
+}
+
 function LeadEntry({ item, note, lang }) {
   const href = getLeadStatusHref(item.slug, item.status);
+
   return (
     <article className="work-item">
       <div>
@@ -118,7 +163,14 @@ function LeadEntry({ item, note, lang }) {
       </div>
       <div className="work-meta">
         <span>{item.owner}</span>
-        <strong>{translateScheduleText(item.deadline || item.scheduledAt, lang, "Not scheduled", "Не назначено")}</strong>
+        <strong>
+          {translateScheduleText(
+            item.deadline || item.scheduledAt,
+            lang,
+            "Not scheduled",
+            "Не назначено"
+          )}
+        </strong>
         <em>{item.status ? formatLeadStatus(item.status, lang) : item.type}</em>
       </div>
     </article>
@@ -137,11 +189,32 @@ function PilotRequestEntry({ item, lang }) {
     <article className="work-item">
       <div>
         <strong>{item.workshopName || item.requestNumber}</strong>
-        <p>{safeLocalizedText(item.note, lang, "Open the pilot inbox and review the workshop pain point.", "Откройте pilot inbox и посмотрите, с какой болью пришёл цех.")}</p>
+        <p>
+          {safeLocalizedText(
+            item.note,
+            lang,
+            "Open the pilot inbox and review the workshop pain point.",
+            "Откройте pilot inbox и посмотрите, с какой болью пришёл цех."
+          )}
+        </p>
+        {item.internalNote ? (
+          <p className="pilot-internal-note">
+            {pick(lang, "Internal note", "Внутренняя заметка")}: {item.internalNote}
+          </p>
+        ) : null}
+        <PilotRequestStatusForm
+          currentNote={item.internalNote || ""}
+          currentStatus={item.status || "NEW"}
+          lang={lang}
+          requestId={item.id || item.requestNumber}
+        />
       </div>
       <div className="work-meta">
         <span>{item.requestNumber}</span>
         <strong>{translateScheduleText(item.createdAt, lang, "Just now", "Только что")}</strong>
+        <em className={getPilotStatusClassName(item.status)}>
+          {formatPilotRequestStatus(item.status, lang)}
+        </em>
         <em>{metaLine}</em>
         <em>{contactLine}</em>
       </div>
@@ -157,9 +230,24 @@ function getTaskHref(item) {
   }
 
   const text = `${item.lane || ""} ${item.tag || ""} ${item.title || ""}`.toLowerCase();
-  if (text.includes("замер") || text.includes("measurement")) return "/appointments?status=SCHEDULED";
-  if (text.includes("кп") || text.includes("расч") || text.includes("смет") || text.includes("estimate")) return "/leads?status=QUALIFIED";
-  if (text.includes("дожим") || text.includes("follow")) return "/leads?status=PROPOSAL";
+
+  if (text.includes("замер") || text.includes("measurement")) {
+    return "/appointments?status=SCHEDULED";
+  }
+
+  if (
+    text.includes("кп") ||
+    text.includes("расч") ||
+    text.includes("смет") ||
+    text.includes("estimate")
+  ) {
+    return "/leads?status=QUALIFIED";
+  }
+
+  if (text.includes("дожим") || text.includes("follow")) {
+    return "/leads?status=PROPOSAL";
+  }
+
   return "/workboard?view=estimates";
 }
 
@@ -190,46 +278,86 @@ export default async function WorkboardPage({ searchParams }) {
     getFollowupsData(),
     getAppointmentsData()
   ]);
+
   const pilotInbox = Array.isArray(data.pilotInbox) ? data.pilotInbox : [];
 
   const focus = [
     {
       label: pick(lang, "No first reply", "Без первого ответа"),
       value: String(leads.filter((lead) => lead.status === "NEW").length),
-      note: pick(lang, "New incoming leads that still need the first touch.", "Новые заявки, которым ещё нужен первый контакт.")
+      note: pick(
+        lang,
+        "New incoming leads that still need the first touch.",
+        "Новые заявки, которым ещё нужен первый контакт."
+      )
     },
     {
       label: pick(lang, "Waiting for estimate", "На расчёте"),
-      value: String(leads.filter((lead) => ["CONTACTED", "QUALIFIED", "PROPOSAL"].includes(lead.status)).length),
-      note: pick(lang, "Deals that now need pricing, estimate or quote follow-up.", "Сделки, где сейчас нужен расчёт, смета или возврат по КП.")
+      value: String(
+        leads.filter((lead) =>
+          ["CONTACTED", "QUALIFIED", "PROPOSAL"].includes(lead.status)
+        ).length
+      ),
+      note: pick(
+        lang,
+        "Deals that now need pricing, estimate or quote follow-up.",
+        "Сделки, где сейчас нужен расчёт, смета или возврат по КП."
+      )
     },
     {
       label: pick(lang, "Measurements and visits", "Замеры и встречи"),
-      value: String(appointments.filter((item) => ["SCHEDULED", "CONFIRMED"].includes(item.status)).length),
-      note: pick(lang, "Upcoming site visits, showroom meetings and consultations.", "Ближайшие выезды, шоурум и консультации.")
+      value: String(
+        appointments.filter((item) => ["SCHEDULED", "CONFIRMED"].includes(item.status))
+          .length
+      ),
+      note: pick(
+        lang,
+        "Upcoming site visits, showroom meetings and consultations.",
+        "Ближайшие выезды, шоурум и консультации."
+      )
     },
     {
       label: pick(lang, "Follow-ups", "Повторный контакт"),
       value: String(followups.filter((item) => item.status === "PENDING").length),
-      note: pick(lang, "Warm clients that should not be left without a callback.", "Тёплые клиенты, которых нельзя оставить без возврата.")
+      note: pick(
+        lang,
+        "Warm clients that should not be left without a callback.",
+        "Тёплые клиенты, которых нельзя оставить без возврата."
+      )
     },
     {
       label: pick(lang, "Pilot launches", "Запуски пилота"),
       value: String(pilotInbox.length),
-      note: pick(lang, "Workshop owners who asked to launch Furneq for their team.", "Владельцы цехов, которые уже запросили запуск Furneq под свой процесс.")
+      note: pick(
+        lang,
+        "Workshop owners who asked to launch Furneq for their team.",
+        "Владельцы цехов, которые уже запросили запуск Furneq под свой процесс."
+      )
     }
   ];
 
   const linkedFocus = focus.map((item, index) => ({
     ...item,
-    href: ["/leads?status=NEW", "/workboard?view=estimates", "/appointments", "/workboard?view=followups", "/workboard?view=pilots"][index] || "/workboard"
+    href:
+      [
+        "/leads?status=NEW",
+        "/workboard?view=estimates",
+        "/appointments",
+        "/workboard?view=followups",
+        "/workboard?view=pilots"
+      ][index] || "/workboard"
   }));
 
   const upcomingMeasurements = [...appointments]
     .filter((item) => ["SCHEDULED", "CONFIRMED"].includes(item.status))
     .sort((first, second) => {
-      const firstDate = first.scheduledAtIso ? new Date(first.scheduledAtIso).getTime() : Number.MAX_SAFE_INTEGER;
-      const secondDate = second.scheduledAtIso ? new Date(second.scheduledAtIso).getTime() : Number.MAX_SAFE_INTEGER;
+      const firstDate = first.scheduledAtIso
+        ? new Date(first.scheduledAtIso).getTime()
+        : Number.MAX_SAFE_INTEGER;
+      const secondDate = second.scheduledAtIso
+        ? new Date(second.scheduledAtIso).getTime()
+        : Number.MAX_SAFE_INTEGER;
+
       return firstDate - secondDate;
     })
     .slice(0, 6);
@@ -285,7 +413,12 @@ export default async function WorkboardPage({ searchParams }) {
             </div>
             <div className="workboard-stack">
               {data.urgentLeads.map((item) => (
-                <LeadEntry item={item} key={`${item.lead}-${item.deadline}`} lang={lang} note={item.source} />
+                <LeadEntry
+                  item={item}
+                  key={`${item.lead}-${item.deadline}`}
+                  lang={lang}
+                  note={item.source}
+                />
               ))}
             </div>
           </article>
@@ -300,7 +433,11 @@ export default async function WorkboardPage({ searchParams }) {
             <div className="workboard-stack">
               {pilotInbox.length ? (
                 pilotInbox.map((item) => (
-                  <PilotRequestEntry item={item} key={item.id || item.requestNumber} lang={lang} />
+                  <PilotRequestEntry
+                    item={item}
+                    key={item.id || item.requestNumber}
+                    lang={lang}
+                  />
                 ))
               ) : (
                 <article className="work-item">
@@ -340,7 +477,9 @@ export default async function WorkboardPage({ searchParams }) {
                   </div>
                   <div className="work-meta">
                     <span>{item.owner}</span>
-                    <strong>{translateScheduleText(item.deadline, lang, "Not scheduled", "Не назначено")}</strong>
+                    <strong>
+                      {translateScheduleText(item.deadline, lang, "Not scheduled", "Не назначено")}
+                    </strong>
                     <em>{translateTaskLane(item.lane, lang)}</em>
                   </div>
                 </article>
@@ -372,7 +511,9 @@ export default async function WorkboardPage({ searchParams }) {
                   </div>
                   <div className="work-meta">
                     <span>{formatAppointmentType(item.type, lang)}</span>
-                    <strong>{translateScheduleText(item.scheduledAt, lang, "Not scheduled", "Не назначено")}</strong>
+                    <strong>
+                      {translateScheduleText(item.scheduledAt, lang, "Not scheduled", "Не назначено")}
+                    </strong>
                     <em>{formatAppointmentStatus(item.status, lang)}</em>
                   </div>
                 </article>
@@ -400,12 +541,26 @@ export default async function WorkboardPage({ searchParams }) {
                         item.lead
                       )}
                     </strong>
-                    <p>{safeLocalizedText(item.note, lang, "Open the deal card to review the follow-up details.", "Откройте сделку, чтобы посмотреть детали возврата.")}</p>
-                    <FollowupCompleteButton lang={lang} lead={item.lead} scheduledAt={item.scheduledAt} type={item.type} />
+                    <p>
+                      {safeLocalizedText(
+                        item.note,
+                        lang,
+                        "Open the deal card to review the follow-up details.",
+                        "Откройте сделку, чтобы посмотреть детали возврата."
+                      )}
+                    </p>
+                    <FollowupCompleteButton
+                      lang={lang}
+                      lead={item.lead}
+                      scheduledAt={item.scheduledAt}
+                      type={item.type}
+                    />
                   </div>
                   <div className="work-meta">
                     <span>{item.owner}</span>
-                    <strong>{translateScheduleText(item.scheduledAt, lang, "Not scheduled", "Не назначено")}</strong>
+                    <strong>
+                      {translateScheduleText(item.scheduledAt, lang, "Not scheduled", "Не назначено")}
+                    </strong>
                     <em>{translateFollowupType(item.type, lang)}</em>
                   </div>
                 </article>
@@ -433,7 +588,14 @@ export default async function WorkboardPage({ searchParams }) {
                         translateAlertAction(item.action, lang)
                       )}
                     </strong>
-                    <p>{safeLocalizedText(item.detail, lang, "Open the deal card to review the latest signal.", "Откройте сделку, чтобы посмотреть подробности сигнала.")}</p>
+                    <p>
+                      {safeLocalizedText(
+                        item.detail,
+                        lang,
+                        "Open the deal card to review the latest signal.",
+                        "Откройте сделку, чтобы посмотреть подробности сигнала."
+                      )}
+                    </p>
                   </div>
                   <div className="work-meta">
                     <span>{translateActorText(item.actor, lang)}</span>

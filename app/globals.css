@@ -985,6 +985,17 @@ select {
   margin-top: 12px;
 }
 
+.pilot-action-row {
+  display: grid;
+  gap: 10px;
+}
+
+.pilot-internal-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .status-chip {
   display: inline-flex;
   align-items: center;
@@ -1016,6 +1027,16 @@ select {
 .status-chip-meeting {
   background: rgba(80, 112, 140, 0.12);
   color: var(--info);
+}
+
+.status-chip-demo_booked {
+  background: rgba(80, 112, 140, 0.12);
+  color: var(--info);
+}
+
+.status-chip-pilot_active {
+  background: rgba(103, 119, 92, 0.14);
+  color: var(--olive);
 }
 
 .status-chip-cancelled,
