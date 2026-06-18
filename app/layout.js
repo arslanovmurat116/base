@@ -19,7 +19,7 @@ const displayFont = Lora({
 export const metadata = {
   title: "Furneq",
   description:
-    "AI workflow for custom furniture orders: leads, measurements, estimates, production and team control."
+    "Telegram CRM for furniture workshops: client requests, measurements, estimates, deposits and workshop control."
 };
 
 export const dynamic = "force-dynamic";
@@ -36,7 +36,7 @@ export default async function RootLayout({ children }) {
               <span className="brand-mark">FQ</span>
               <div>
                 <strong>Furneq</strong>
-                <small>{pick(lang, "AI workspace for custom furniture orders", "AI-система для мебельных заказов")}</small>
+                <small>{pick(lang, "Telegram CRM for furniture workshops", "Telegram CRM для мебельных цехов")}</small>
               </div>
             </Link>
             <Suspense fallback={null}>
