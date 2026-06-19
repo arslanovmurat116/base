@@ -16,6 +16,12 @@ select 'telegram_subscribers', count(*) from telegram_subscribers
 union all
 select 'telegram_client_leads', count(*) from telegram_client_leads
 union all
+select 'product_pilot_requests', count(*) from product_pilot_requests
+union all
+select 'product_launch_handoffs', count(*) from product_launch_handoffs
+union all
+select 'customer_success_loops', count(*) from customer_success_loops
+union all
 select 'daily_reports', count(*) from daily_reports;
 
 select id, full_name, source, channel, status, assigned_user_id, created_at

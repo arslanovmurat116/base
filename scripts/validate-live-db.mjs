@@ -75,6 +75,12 @@ async function main() {
         select 'telegram_subscribers', count(*)::int from telegram_subscribers
         union all
         select 'telegram_client_leads', count(*)::int from telegram_client_leads
+        union all
+        select 'product_pilot_requests', count(*)::int from product_pilot_requests
+        union all
+        select 'product_launch_handoffs', count(*)::int from product_launch_handoffs
+        union all
+        select 'customer_success_loops', count(*)::int from customer_success_loops
       `
     );
 
