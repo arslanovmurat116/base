@@ -12,6 +12,10 @@ select 'lead_messages', count(*) from lead_messages
 union all
 select 'lead_events', count(*) from lead_events
 union all
+select 'telegram_subscribers', count(*) from telegram_subscribers
+union all
+select 'telegram_client_leads', count(*) from telegram_client_leads
+union all
 select 'daily_reports', count(*) from daily_reports;
 
 select id, full_name, source, channel, status, assigned_user_id, created_at

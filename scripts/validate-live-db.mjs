@@ -71,6 +71,10 @@ async function main() {
         select 'appointments', count(*)::int from appointments
         union all
         select 'lead_events', count(*)::int from lead_events
+        union all
+        select 'telegram_subscribers', count(*)::int from telegram_subscribers
+        union all
+        select 'telegram_client_leads', count(*)::int from telegram_client_leads
       `
     );
 

@@ -49,7 +49,7 @@ export async function GET(request, context) {
     {
       ...result,
       scope,
-      status: getTelegramControlStatus()
+      status: await getTelegramControlStatus()
     },
     {
       status: result.ok ? 200 : result.status || 400

@@ -54,7 +54,7 @@ export async function GET(request) {
 
   return NextResponse.json({
     ...result,
-    status: getTelegramControlStatus()
+    status: await getTelegramControlStatus()
   });
 }
 
@@ -76,6 +76,6 @@ export async function POST(request) {
 
   return NextResponse.json({
     ...result,
-    status: getTelegramControlStatus()
+    status: await getTelegramControlStatus()
   });
 }

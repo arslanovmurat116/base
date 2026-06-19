@@ -18,7 +18,7 @@ function hasValidSecret(request) {
 export async function GET() {
   return NextResponse.json({
     ok: true,
-    status: getTelegramControlStatus()
+    status: await getTelegramControlStatus()
   });
 }
 
