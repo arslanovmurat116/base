@@ -28,6 +28,8 @@ select 'telegram_registration_states', count(*) from telegram_registration_state
 union all
 select 'telegram_dispatch_logs', count(*) from telegram_dispatch_logs
 union all
+select 'telegram_update_offsets', count(*) from telegram_update_offsets
+union all
 select 'daily_reports', count(*) from daily_reports;
 
 select id, full_name, source, channel, status, assigned_user_id, created_at

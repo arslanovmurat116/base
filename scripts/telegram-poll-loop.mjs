@@ -17,7 +17,7 @@ async function main() {
 
   console.log(`Telegram loop started -> ${config.baseUrl}/api/telegram/webhook`);
 
-  let currentOffset = readUpdateOffset();
+  let currentOffset = await readUpdateOffset();
 
   while (true) {
     const updates = await fetchTelegramUpdates(config.token, currentOffset, 15);
@@ -31,7 +31,7 @@ async function main() {
       currentOffset = Math.max(currentOffset, Number(update.update_id || 0) + 1);
     }
 
-    writeUpdateOffset(currentOffset);
+    await writeUpdateOffset(currentOffset);
     console.log(`Processed updates: ${updates.length}. Next offset: ${currentOffset}`);
     await sleep(250);
   }

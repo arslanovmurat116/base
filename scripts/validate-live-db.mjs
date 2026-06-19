@@ -87,6 +87,8 @@ async function main() {
         select 'telegram_registration_states', count(*)::int from telegram_registration_states
         union all
         select 'telegram_dispatch_logs', count(*)::int from telegram_dispatch_logs
+        union all
+        select 'telegram_update_offsets', count(*)::int from telegram_update_offsets
       `
     );
 

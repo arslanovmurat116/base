@@ -13,7 +13,7 @@ async function main() {
     throw new Error("TELEGRAM_BOT_TOKEN is not configured");
   }
 
-  const currentOffset = readUpdateOffset();
+  const currentOffset = await readUpdateOffset();
   const updates = await fetchTelegramUpdates(config.token, currentOffset);
 
   if (!updates.length) {
@@ -28,7 +28,7 @@ async function main() {
     latestOffset = Math.max(latestOffset, Number(update.update_id || 0) + 1);
   }
 
-  writeUpdateOffset(latestOffset);
+  await writeUpdateOffset(latestOffset);
   console.log(`Processed updates: ${updates.length}`);
   console.log(`Next offset: ${latestOffset}`);
 }
