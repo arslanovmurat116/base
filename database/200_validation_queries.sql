@@ -22,6 +22,8 @@ select 'product_launch_handoffs', count(*) from product_launch_handoffs
 union all
 select 'customer_success_loops', count(*) from customer_success_loops
 union all
+select 'lead_runtime_patches', count(*) from lead_runtime_patches
+union all
 select 'daily_reports', count(*) from daily_reports;
 
 select id, full_name, source, channel, status, assigned_user_id, created_at

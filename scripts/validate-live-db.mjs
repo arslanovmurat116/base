@@ -81,6 +81,8 @@ async function main() {
         select 'product_launch_handoffs', count(*)::int from product_launch_handoffs
         union all
         select 'customer_success_loops', count(*)::int from customer_success_loops
+        union all
+        select 'lead_runtime_patches', count(*)::int from lead_runtime_patches
       `
     );
 
