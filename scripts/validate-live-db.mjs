@@ -83,6 +83,10 @@ async function main() {
         select 'customer_success_loops', count(*)::int from customer_success_loops
         union all
         select 'lead_runtime_patches', count(*)::int from lead_runtime_patches
+        union all
+        select 'telegram_registration_states', count(*)::int from telegram_registration_states
+        union all
+        select 'telegram_dispatch_logs', count(*)::int from telegram_dispatch_logs
       `
     );
 

@@ -47,7 +47,8 @@ function resolveSqlFiles() {
     "009_performance_indexes.sql",
     "010_telegram_runtime_state.sql",
     "011_product_runtime_state.sql",
-    "012_lead_runtime_patches.sql"
+    "012_lead_runtime_patches.sql",
+    "013_telegram_control_runtime.sql"
   ];
 
   const withLocalSeed =
