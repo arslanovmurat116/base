@@ -89,6 +89,22 @@ async function main() {
         select 'telegram_dispatch_logs', count(*)::int from telegram_dispatch_logs
         union all
         select 'telegram_update_offsets', count(*)::int from telegram_update_offsets
+        union all
+        select 'roles', count(*)::int from roles
+        union all
+        select 'user_roles', count(*)::int from user_roles
+        union all
+        select 'clients', count(*)::int from clients
+        union all
+        select 'deals', count(*)::int from deals
+        union all
+        select 'business_events', count(*)::int from business_events
+        union all
+        select 'miniapp_sessions', count(*)::int from miniapp_sessions
+        union all
+        select 'telegram_identities', count(*)::int from telegram_identities
+        union all
+        select 'telegram_analytics_events', count(*)::int from telegram_analytics_events
       `
     );
 
@@ -144,6 +160,24 @@ async function main() {
         where f.status = 'PENDING'
         order by f.scheduled_at asc
         limit 10
+      `
+    );
+
+    await printTable(
+      "LEADS_WITHOUT_DEAL",
+      `
+        select
+          l.id,
+          coalesce(l.full_name, l.telegram_username, 'Клиент без имени') as lead,
+          l.status,
+          l.created_at
+        from leads l
+        left join deals d
+          on d.company_id = l.company_id
+         and d.lead_id = l.id
+        where d.id is null
+        order by l.created_at desc
+        limit 20
       `
     );
 

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Lora, Manrope } from "next/font/google";
 import "./globals.css";
 import TopNav from "../components/top-nav";
+import MiniAppLaunchClient from "../components/miniapp-launch-client";
 import { pick } from "../lib/i18n";
 import { getLanguage } from "../lib/i18n-server";
 
@@ -17,9 +18,9 @@ const displayFont = Lora({
 });
 
 export const metadata = {
-  title: "Furneq",
+  title: "BOSE",
   description:
-    "Telegram CRM for furniture workshops: client requests, measurements, estimates, deposits and workshop control."
+    "Business OS Engine for Telegram-first teams, with BOSE core entities, Mini App workflows, and Furneq as the first live module."
 };
 
 export const dynamic = "force-dynamic";
@@ -30,13 +31,20 @@ export default async function RootLayout({ children }) {
   return (
     <html lang={lang}>
       <body className={`${bodyFont.variable} ${displayFont.variable}`}>
+        <MiniAppLaunchClient />
         <div className="app-frame">
           <header className="topbar">
             <Link className="brand" href="/">
-              <span className="brand-mark">FQ</span>
+              <span className="brand-mark">BO</span>
               <div>
-                <strong>Furneq</strong>
-                <small>{pick(lang, "Telegram CRM for furniture workshops", "Telegram CRM для мебельных цехов")}</small>
+                <strong>BOSE</strong>
+                <small>
+                  {pick(
+                    lang,
+                    "Business OS Engine for Telegram-first operations",
+                    "Business OS Engine для Telegram-first операций"
+                  )}
+                </small>
               </div>
             </Link>
             <Suspense fallback={null}>

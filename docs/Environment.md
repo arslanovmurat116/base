@@ -1,0 +1,42 @@
+# Environment
+
+Key environment variables:
+
+## Core
+
+- `DISET_DEFAULT_COMPANY_ID`
+- `APP_BASE_URL`
+
+## Database
+
+- `POSTGRES_HOST`
+- `POSTGRES_PORT`
+- `POSTGRES_DATABASE`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `POSTGRES_SSL`
+
+Optional tuning:
+
+- `POSTGRES_POOL_MAX`
+- `POSTGRES_IDLE_TIMEOUT_MS`
+- `POSTGRES_CONNECT_TIMEOUT_MS`
+- `POSTGRES_QUERY_TIMEOUT_MS`
+- `POSTGRES_STATEMENT_TIMEOUT_MS`
+
+## Telegram
+
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_BOT_SECRET_TOKEN`
+- `CRON_SECRET`
+
+## Storage
+
+- `BLOB_READ_WRITE_TOKEN`
+
+## AI
+
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`
+
+Use `.env.example` as the base template.

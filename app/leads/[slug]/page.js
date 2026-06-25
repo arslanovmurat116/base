@@ -213,7 +213,7 @@ export async function generateMetadata({ params }) {
   const lead = await getLeadBySlug(resolved.slug);
 
   return {
-    title: lead ? `${lead.name} | Deal` : "Deal not found | Furneq"
+    title: lead ? `${lead.name} | Deal` : "Deal not found | BOSE"
   };
 }
 

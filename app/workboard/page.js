@@ -26,6 +26,7 @@ import {
 } from "../../lib/display-text";
 import {
   getAppointmentsData,
+  getCoreStatisticsData,
   getFollowupsData,
   getLeadsData,
   getWorkboardData
@@ -34,7 +35,7 @@ import { pick } from "../../lib/i18n";
 import { getLanguage } from "../../lib/i18n-server";
 
 export const metadata = {
-  title: "Workboard | Furneq"
+  title: "Workboard | BOSE"
 };
 
 function FocusCard({ label, value, note, href }) {
@@ -444,11 +445,12 @@ export default async function WorkboardPage({ searchParams }) {
   const resolved = await searchParams;
   const view = resolved?.view || "all";
 
-  const [data, leads, followups, appointments] = await Promise.all([
+  const [data, leads, followups, appointments, coreStatistics] = await Promise.all([
     getWorkboardData(),
     getLeadsData(),
     getFollowupsData(),
-    getAppointmentsData()
+    getAppointmentsData(),
+    getCoreStatisticsData()
   ]);
 
   const pilotInbox = Array.isArray(data.pilotInbox) ? data.pilotInbox : [];
@@ -457,73 +459,66 @@ export default async function WorkboardPage({ searchParams }) {
 
   const focus = [
     {
-      label: pick(lang, "No first reply", "Р‘РµР· РїРµСЂРІРѕРіРѕ РѕС‚РІРµС‚Р°"),
-      value: String(leads.filter((lead) => lead.status === "NEW").length),
+      label: pick(lang, "Clients", "Клиенты"),
+      value: String(coreStatistics.clientsTotal),
       note: pick(
         lang,
-        "New incoming leads that still need the first touch.",
-        "РќРѕРІС‹Рµ Р·Р°СЏРІРєРё, РєРѕС‚РѕСЂС‹Рј РµС‰С‘ РЅСѓР¶РµРЅ РїРµСЂРІС‹Р№ РєРѕРЅС‚Р°РєС‚."
+        "Client records already linked into BOSE core.",
+        "Client records, которые уже связаны с core BOSE."
       )
     },
     {
-      label: pick(lang, "Waiting for estimate", "РќР° СЂР°СЃС‡С‘С‚Рµ"),
-      value: String(
-        leads.filter((lead) =>
-          ["CONTACTED", "QUALIFIED", "PROPOSAL"].includes(lead.status)
-        ).length
-      ),
+      label: pick(lang, "Open deals", "Открытые сделки"),
+      value: String(coreStatistics.dealsOpen),
       note: pick(
         lang,
-        "Deals that now need pricing, estimate or quote follow-up.",
-        "РЎРґРµР»РєРё, РіРґРµ СЃРµР№С‡Р°СЃ РЅСѓР¶РµРЅ СЂР°СЃС‡С‘С‚, СЃРјРµС‚Р° РёР»Рё РІРѕР·РІСЂР°С‚ РїРѕ РљРџ."
+        "Pipeline items that are still active in BOSE core.",
+        "Элементы воронки, которые ещё активны в core BOSE."
       )
     },
     {
-      label: pick(lang, "Measurements and visits", "Р—Р°РјРµСЂС‹ Рё РІСЃС‚СЂРµС‡Рё"),
-      value: String(
-        appointments.filter((item) => ["SCHEDULED", "CONFIRMED"].includes(item.status))
-          .length
-      ),
+      label: pick(lang, "Tasks", "Задачи"),
+      value: String(coreStatistics.tasksOpen),
       note: pick(
         lang,
-        "Upcoming site visits, showroom meetings and consultations.",
-        "Р‘Р»РёР¶Р°Р№С€РёРµ РІС‹РµР·РґС‹, С€РѕСѓСЂСѓРј Рё РєРѕРЅСЃСѓР»СЊС‚Р°С†РёРё."
+        "Execution work that still needs team action.",
+        "Исполнительная работа, которая ещё требует действия команды."
       )
     },
     {
       label: pick(lang, "Follow-ups", "РџРѕРІС‚РѕСЂРЅС‹Р№ РєРѕРЅС‚Р°РєС‚"),
-      value: String(followups.filter((item) => item.status === "PENDING").length),
+      value: String(coreStatistics.followupsPending),
       note: pick(
         lang,
-        "Warm clients that should not be left without a callback.",
-        "РўС‘РїР»С‹Рµ РєР»РёРµРЅС‚С‹, РєРѕС‚РѕСЂС‹С… РЅРµР»СЊР·СЏ РѕСЃС‚Р°РІРёС‚СЊ Р±РµР· РІРѕР·РІСЂР°С‚Р°."
+        "Return contacts that are still blocking movement.",
+        "Возвраты, которые всё ещё блокируют движение по воронке."
       )
     },
     {
-      label: pick(lang, "Pilot launches", "Р—Р°РїСѓСЃРєРё РїРёР»РѕС‚Р°"),
-      value: String(pilotInbox.length),
+      label: pick(lang, "Appointments", "Замеры и встречи"),
+      value: String(coreStatistics.appointmentsScheduled),
       note: pick(
         lang,
-        "Workshop owners who asked to launch Furneq for their team.",
-        "Р’Р»Р°РґРµР»СЊС†С‹ С†РµС…РѕРІ, РєРѕС‚РѕСЂС‹Рµ СѓР¶Рµ Р·Р°РїСЂРѕСЃРёР»Рё Р·Р°РїСѓСЃРє Furneq РїРѕРґ СЃРІРѕР№ РїСЂРѕС†РµСЃСЃ."
+        "Scheduled visits, measurements, or consultations.",
+        "Назначенные выезды, замеры или консультации."
       )
     },
     {
-      label: pick(lang, "Customer launches", "Р—Р°РїСѓСЃРєРё РєР»РёРµРЅС‚Р°"),
-      value: String(launchInbox.length),
+      label: pick(lang, "Notifications", "Сигналы"),
+      value: String(coreStatistics.notificationsTotal),
       note: pick(
         lang,
-        "Sold pilots that should now move through kickoff, setup and go-live.",
-        "РџСЂРѕРґР°РЅРЅС‹Рµ РїРёР»РѕС‚С‹, РєРѕС‚РѕСЂС‹Рµ СѓР¶Рµ РЅСѓР¶РЅРѕ РїСЂРѕРІРµСЃС‚Рё С‡РµСЂРµР· kickoff, РЅР°СЃС‚СЂРѕР№РєСѓ Рё Р·Р°РїСѓСЃРє."
+        "Recent operational signals collected from activity and business events.",
+        "Свежие операционные сигналы из activity и business events."
       )
     },
     {
-      label: pick(lang, "Customer success", "Удержание"),
-      value: String(successInbox.length),
+      label: pick(lang, "Pilot ops", "Product ops"),
+      value: String(pilotInbox.length + launchInbox.length + successInbox.length),
       note: pick(
         lang,
-        "Live workshops that now need adoption checks and renewal control.",
-        "Запущенные цеха, которым теперь нужны внедрение, удержание и контроль продления."
+        "Pilot, launch, and customer success loops now tracked inside BOSE.",
+        "Пилот, запуск и удержание теперь уже отслеживаются внутри BOSE."
       )
     }
   ];
@@ -568,13 +563,13 @@ export default async function WorkboardPage({ searchParams }) {
   return (
     <main className="page-shell">
       <section className="page-heading">
-        <p className="eyebrow">{pick(lang, "Workboard", "РЎРјРµРЅР°")}</p>
-        <h1>{pick(lang, "One queue for the whole team", "РћРґРЅР° СЂР°Р±РѕС‡Р°СЏ РѕС‡РµСЂРµРґСЊ РґР»СЏ РІСЃРµР№ РєРѕРјР°РЅРґС‹")}</h1>
+        <p className="eyebrow">{pick(lang, "BOSE Workboard", "BOSE Workboard")}</p>
+        <h1>{pick(lang, "One queue for core execution", "Единая очередь для core-исполнения")}</h1>
         <p>
           {pick(
             lang,
-            "Use one board for new leads, estimate work, upcoming visits, follow-ups and risk signals.",
-            "РћРґРёРЅ СЌРєСЂР°РЅ РґР»СЏ РЅРѕРІС‹С… Р·Р°СЏРІРѕРє, СЂР°СЃС‡С‘С‚РѕРІ, Р·Р°РјРµСЂРѕРІ, РІРѕР·РІСЂР°С‚РѕРІ Рё СЃРёРіРЅР°Р»РѕРІ СЂРёСЃРєР°."
+            "Use one board for clients, deals, tasks, follow-ups, appointments, and operational signals.",
+            "Один экран для клиентов, сделок, задач, возвратов, встреч и операционных сигналов."
           )}
         </p>
       </section>
@@ -626,7 +621,7 @@ export default async function WorkboardPage({ searchParams }) {
           <article className="panel workboard-panel">
             <div className="section-title">
               <p className="eyebrow">{pick(lang, "Pilots", "РџРёР»РѕС‚С‹")}</p>
-              <h2>{pick(lang, "Who wants Furneq for their workshop", "РљС‚Рѕ С…РѕС‡РµС‚ РІРЅРµРґСЂРёС‚СЊ Furneq РІ СЃРІРѕР№ С†РµС…")}</h2>
+              <h2>{pick(lang, "Who wants BOSE for their workshop", "Кто хочет внедрить BOSE в свой цех")}</h2>
             </div>
             <div className="workboard-stack">
               {pilotInbox.length ? (
@@ -676,8 +671,8 @@ export default async function WorkboardPage({ searchParams }) {
                     <p>
                       {pick(
                         lang,
-                        "As soon as a pilot request is marked as won, Furneq will create a launch handoff here.",
-                        "Как только pilot request переводится в sold, Furneq создаёт здесь handoff на запуск."
+                        "As soon as a pilot request is marked as won, BOSE will create a launch handoff here.",
+                        "Как только pilot request переводится в sold, BOSE создаёт здесь handoff на запуск."
                       )}
                     </p>
                   </div>
@@ -709,8 +704,8 @@ export default async function WorkboardPage({ searchParams }) {
                     <p>
                       {pick(
                         lang,
-                        "As soon as a launch goes live, Furneq will create a retention loop here.",
-                        "Как только запуск перейдёт в live, Furneq создаст здесь контур удержания."
+                        "As soon as a launch goes live, BOSE will create a retention loop here.",
+                        "Как только запуск перейдёт в live, BOSE создаст здесь контур удержания."
                       )}
                     </p>
                   </div>

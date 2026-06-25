@@ -1,5 +1,5 @@
 insert into companies (id, name)
-values ('11111111-1111-1111-1111-111111111111', 'Mebel RDN')
+values ('11111111-1111-1111-1111-111111111111', 'BOSE Demo Workspace')
 on conflict (id) do update
 set name = excluded.name;
 

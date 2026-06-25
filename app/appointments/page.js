@@ -11,7 +11,7 @@ import { getLanguage } from "../../lib/i18n-server";
 import { getAppointmentsData } from "../../lib/server-data";
 
 export const metadata = {
-  title: "Appointments | Furneq"
+  title: "Appointments | BOSE"
 };
 
 function formatAppointmentType(type, lang) {

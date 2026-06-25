@@ -16,7 +16,7 @@ import {
 import { getLeadsData } from "../../lib/server-data";
 
 export const metadata = {
-  title: "Deals | Furneq"
+  title: "Deals | BOSE"
 };
 
 const STATUS_ORDER = {

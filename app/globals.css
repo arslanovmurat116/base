@@ -1104,6 +1104,13 @@ select {
   color: var(--accent-strong);
 }
 
+.prose {
+  display: grid;
+  gap: 0.85rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .task-board {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

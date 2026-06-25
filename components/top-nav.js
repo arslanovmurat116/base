@@ -1,25 +1,29 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import LanguageToggle from "./language-toggle";
+import TrackedLink from "./tracked-link";
 
 export default function TopNav({ lang = "en" }) {
   const pathname = usePathname();
   const navItems = [
     { href: "/", label: lang === "ru" ? "Главная" : "Home" },
-    { href: "/workboard", label: lang === "ru" ? "Смена" : "Workboard" },
-    { href: "/leads", label: lang === "ru" ? "Сделки" : "Deals" },
-    { href: "/appointments", label: lang === "ru" ? "Замеры" : "Appointments" }
+    { href: "/dashboard", label: lang === "ru" ? "Панель" : "Dashboard" },
+    { href: "/clients", label: lang === "ru" ? "Клиенты" : "Clients" },
+    { href: "/deals", label: lang === "ru" ? "Сделки" : "Deals" },
+    { href: "/tasks", label: lang === "ru" ? "Задачи" : "Tasks" },
+    { href: "/test", label: lang === "ru" ? "Тест" : "Test" }
   ];
 
   return (
     <div className="topnav-shell">
       <nav className="topnav">
         {navItems.map((item) => (
-          <Link
+          <TrackedLink
             key={item.href}
             href={item.href}
+            eventLabel={item.label}
+            eventSource="topnav"
             className={
               item.href === "/"
                 ? pathname === "/"
@@ -31,7 +35,7 @@ export default function TopNav({ lang = "en" }) {
             }
           >
             {item.label}
-          </Link>
+          </TrackedLink>
         ))}
       </nav>
       <LanguageToggle lang={lang} />

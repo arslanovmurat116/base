@@ -49,7 +49,11 @@ function resolveSqlFiles() {
     "011_product_runtime_state.sql",
     "012_lead_runtime_patches.sql",
     "013_telegram_control_runtime.sql",
-    "014_telegram_update_offsets.sql"
+    "014_telegram_update_offsets.sql",
+    "015_bose_core_foundation.sql",
+    "016_bose_dual_write_backfill.sql",
+    "017_bose_rc1_indexes.sql",
+    "018_telegram_launch_foundation.sql"
   ];
 
   const withLocalSeed =

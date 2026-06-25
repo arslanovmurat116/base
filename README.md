@@ -1,137 +1,142 @@
-# Mebel RDN Mini App
+# BOSE RC1
 
-Telegram Mini App для мебельного бизнеса.
+BOSE is a Telegram-first Business OS Engine built on the existing product runtime, not a rewrite.  
+This repository contains the BOSE core, the Telegram bot and Mini App shell, core APIs and read models, and the first live vertical module: `Furneq`.
 
-Новый фокус проекта:
+## What BOSE RC1 already includes
 
-- принимать заявки внутри Telegram
-- консультировать и вести клиента к замеру
-- дожимать до расчёта, согласования и предоплаты
-- держать под контролем менеджера, замерщика и цех
-- продаваться по подписке с разными планами и подключаемыми функциями
+- BOSE core foundation:
+  - `Company`
+  - `User`
+  - `Role`
+  - `Lead`
+  - `Client`
+  - `Deal`
+  - `Task`
+  - `Followup`
+  - `Appointment`
+  - `Conversation`
+  - `Message`
+  - `Notification`
+  - `BusinessEvent`
+- Telegram bot with internal and client flows
+- Telegram Mini App shell, auth verification scaffold, launch analytics, and session capture
+- Postgres-backed runtime state
+- Core APIs and core read models
+- BOSE dashboard and workboard
+- AI MVP:
+  - AI Sales Assistant
+  - AI CRM Assistant
+- Furneq as the first live module on top of BOSE
 
-Это уже не просто внутренняя CRM. Мы упаковываем продукт как продаваемую Telegram-систему для мебельных цехов и студий.
+## Product shape
 
-## Что уже есть
+BOSE is the reusable operating system.
 
-- Telegram-бот с регистрацией ролей
-- текстовые менеджерские интенты и контрольные ответы
-- карточки сделок, замеры, follow-up, проектные файлы и смета
-- контур оплаты, производства и установки
-- demo/live data слой
-- production deploy на Vercel
+Furneq is the first working module that proves the system on a live domain:
 
-## Текущий продуктовый вектор
+- inbound requests
+- deal flow
+- measurements
+- estimate flow
+- workshop control
 
-Продукт продаётся как Telegram-first система:
+## Repository map
 
-1. Бот принимает и сопровождает входящий поток.
-2. Mini App показывает клиентский и операционный контур.
-3. Back-office держит сделки, замеры, сметы, оплату и цех.
-4. Монетизация идёт через подписку и платные функции.
+```text
+app/               Next.js pages and API routes
+components/        Reusable UI and action controls
+database/          Core and runtime migrations, seed, validation SQL
+docs/              Setup, deployment, roadmap, and contributor docs
+lib/core/          BOSE core maps, transitions, events, read models
+lib/telegram/      Telegram Mini App auth and Telegram-specific helpers
+lib/ai/            Unified BOSE AI service and agent registry
+lib/modules/       Module registry and Furneq manifest
+lib/               Runtime services, DB, bot logic, server data orchestration
+scripts/           Bootstrap, validation, Telegram, and release scripts
+```
 
-## Продуктовое обещание
-
-Mebel RDN Mini App должен делать 3 вещи:
-
-1. Не терять заявки.
-2. Дожимать клиентов до денег.
-3. Давать руководителю контроль работы команды и цеха.
-
-## Тарифная модель
-
-### Старт
-
-- заявки и сделки
-- бот и базовые ответы
-- замеры и follow-up
-- базовый Telegram-контроль
-
-### Рост
-
-- всё из Старт
-- проект, смета и файлы
-- контроль оплат
-- дожим до предоплаты
-
-### Цех
-
-- всё из Рост
-- производство и установка
-- роли и контроль команды
-- директорские сводки и управленческий контур
-
-### Подключаемые функции
-
-- дополнительные роли
-- расширенный дожим
-- white-label
-- интеграции
-- расширенная аналитика
-
-## Путь к первым деньгам
-
-Ближайшая цель не “идеальная коробка”, а первая продажа.
-
-Порядок такой:
-
-1. Упаковать продуктовый вход в самом Mini App.
-2. Показать продающее демо: бот + сделки + смета + контроль.
-3. Сделать пилотный оффер.
-4. Подключить первого клиента на подписку.
-5. Потом наращивать функции и тарифы.
-
-## Текущий приоритет разработки
-
-Сейчас мы не распыляемся на всё подряд.
-
-Приоритет:
-
-1. Упаковка под продажу.
-2. Telegram-first сценарии.
-3. Подписка и планы.
-4. Дожим и контроль.
-5. Потом live-углубление и масштабирование.
-
-## Локальный запуск
+## Local start
 
 ```powershell
 npm install
 npm run dev
 ```
 
-Если `3000` занят:
+If port `3000` is already in use:
 
 ```powershell
 npm run dev -- --port 3004
 ```
 
-## Проверка сборки
+## RC1 verification
 
 ```powershell
 npm run build
+npm run validate:live-db
+npm run check:system
 ```
 
-## Telegram
-
-Полезные команды:
+For the full release gate:
 
 ```powershell
-npm run telegram:me
-npm run telegram:commands:set
-npm run telegram:webhook:info
+npm run check:rc
 ```
 
-Для локального теста:
+## Documentation
 
-```powershell
-npm run telegram:poll-loop
-```
+- [Architecture](./Architecture.md)
+- [Getting Started](./docs/Getting-Started.md)
+- [Installation](./docs/Installation.md)
+- [Environment](./docs/Environment.md)
+- [Deployment](./docs/Deployment.md)
+- [Telegram Setup](./docs/Telegram-Setup.md)
+- [AI Setup](./docs/AI-Setup.md)
+- [Roadmap](./docs/Roadmap.md)
+- [Contributing](./CONTRIBUTING.md)
+- [Release Checklist](./RELEASE_CHECKLIST.md)
 
-## Ближайшие продуктовые задачи
+## Core URLs
 
-- довести продающий landing внутри Mini App
-- собрать тарифы и paywall-логику
-- зафиксировать сценарий onboarding
-- подготовить пилотный оффер
-- довести бота до первого канала продаж
+- Landing: `/`
+- Dashboard: `/dashboard`
+- Clients: `/clients`
+- Deals: `/deals`
+- Tasks: `/tasks`
+- Demo Mode: `/demo`
+- Test Checklist: `/test`
+- Workboard: `/workboard`
+- Deals: `/leads`
+- Appointments: `/appointments`
+
+## Core APIs
+
+- `/api/system/health`
+- `/api/telegram/analytics/track`
+- `/api/dashboard`
+- `/api/workboard`
+- `/api/leads`
+- `/api/core/clients`
+- `/api/core/clients/{id}`
+- `/api/core/deals`
+- `/api/core/deals/{id}`
+- `/api/core/summaries`
+- `/api/core/statistics`
+- `/api/ai/crm/summary`
+- `/api/ai/sales/leads/{slug}`
+- `/api/telegram/webhook`
+- `/api/telegram/miniapp/auth`
+- `/api/telegram/miniapp/session/end`
+
+## Release posture
+
+BOSE RC1 is aimed at:
+
+- GitHub publication
+- investor demos
+- developer onboarding
+- first live users
+- Telegram Mini App launch readiness
+
+This is not a greenfield framework.  
+It is the hardened release candidate of the current working system.
