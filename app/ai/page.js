@@ -1,6 +1,7 @@
 import TrackedLink from "../../components/tracked-link";
 import EmptyStateActions from "../../components/empty-state-actions";
 import EventBeacon from "../../components/event-beacon";
+import WorkspaceShortcuts from "../../components/workspace-shortcuts";
 import { getAICRMSummary, getLeadAISalesAssistantData, getLeadsData } from "../../lib/server-data";
 import { getLanguage } from "../../lib/i18n-server";
 
@@ -27,6 +28,18 @@ export default async function AIPage() {
             ? "Один AI-слой для summary, next action, draft reply и ежедневной сводки по рабочему пространству."
             : "One AI layer for summaries, next actions, draft replies, and daily workspace guidance."}
         </p>
+      </section>
+
+      <section className="panel">
+        <div className="section-title">
+          <p className="eyebrow">{isRu ? "Быстрый старт" : "Quick start"}</p>
+          <h2>{isRu ? "Куда перейти после AI" : "Where to go after AI"}</h2>
+        </div>
+        <WorkspaceShortcuts
+          lang={lang}
+          eventSource="ai-shortcuts"
+          items={["dashboard", "clients", "deals", "tasks", "bot", "request"]}
+        />
       </section>
 
       <section className="workboard-grid">

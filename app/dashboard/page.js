@@ -1,4 +1,5 @@
 import TrackedLink from "../../components/tracked-link";
+import WorkspaceShortcuts from "../../components/workspace-shortcuts";
 import { getAICRMSummary, getBOSEDashboardData } from "../../lib/server-data";
 import { getLanguage } from "../../lib/i18n-server";
 
@@ -17,22 +18,24 @@ function MetricCard({ item }) {
 }
 
 function QueueEntry({ title, meta, href, eventLabel }) {
-  return (
+  const card = (
     <article className="work-item">
       <div>
-        <strong>
-          {href ? (
-            <TrackedLink className="work-item-link" eventLabel={eventLabel || title} eventSource="dashboard" href={href}>
-              {title}
-            </TrackedLink>
-          ) : (
-            title
-          )}
-        </strong>
+        <strong>{title}</strong>
         <p>{meta}</p>
       </div>
     </article>
   );
+
+  if (href) {
+    return (
+      <TrackedLink className="queue-item-link-card" eventLabel={eventLabel || title} eventSource="dashboard" href={href}>
+        {card}
+      </TrackedLink>
+    );
+  }
+
+  return card;
 }
 
 export default async function DashboardPage() {
@@ -51,6 +54,18 @@ export default async function DashboardPage() {
             ? "Панель с пользователями, сессиями, клиентами, сделками, задачами и AI-подсказками."
             : "A clear view of users, sessions, clients, deals, tasks, and AI recommendations."}
         </p>
+      </section>
+
+      <section className="panel">
+        <div className="section-title">
+          <p className="eyebrow">{isRu ? "Быстрый старт" : "Quick start"}</p>
+          <h2>{isRu ? "Куда нажать дальше" : "Where to click next"}</h2>
+        </div>
+        <WorkspaceShortcuts
+          lang={lang}
+          eventSource="dashboard-shortcuts"
+          items={["clients", "deals", "tasks", "ai", "demo", "bot"]}
+        />
       </section>
 
       <section className="panel">

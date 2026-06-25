@@ -1,5 +1,6 @@
 import TrackedLink from "../../components/tracked-link";
 import EmptyStateActions from "../../components/empty-state-actions";
+import WorkspaceShortcuts from "../../components/workspace-shortcuts";
 import { getTasksData } from "../../lib/server-data";
 import { getLanguage } from "../../lib/i18n-server";
 
@@ -14,6 +15,27 @@ function flattenTasks(columns = []) {
       laneLabel: column.title || column.label || column.id || "Queue"
     }))
   );
+}
+
+function formatLaneLabel(value, lang) {
+  const source = String(value || "");
+  if (lang === "ru") {
+    return source;
+  }
+
+  if (source === "Срочно") {
+    return "Urgent";
+  }
+
+  if (source === "В работе") {
+    return "In progress";
+  }
+
+  if (source === "На дожим") {
+    return "Closing";
+  }
+
+  return source;
 }
 
 export default async function TasksPage() {
@@ -35,6 +57,14 @@ export default async function TasksPage() {
       </section>
 
       <section className="panel">
+        <div className="section-title">
+          <p className="eyebrow">{isRu ? "Быстрый старт" : "Quick start"}</p>
+          <h2>{isRu ? "Навигация по задачам" : "Task workspace shortcuts"}</h2>
+        </div>
+        <WorkspaceShortcuts lang={lang} eventSource="tasks-shortcuts" items={["dashboard", "clients", "deals", "ai"]} />
+      </section>
+
+      <section className="panel">
         {!tasks.length ? (
           <>
             <div className="section-title">
@@ -50,7 +80,7 @@ export default async function TasksPage() {
                 <div>
                   <strong>{task.title || (isRu ? "Задача" : "Task")}</strong>
                   <p>
-                    {task.laneLabel} - {task.owner || task.ownerName || "Unassigned"} -{" "}
+                    {formatLaneLabel(task.laneLabel, lang)} - {task.owner || task.ownerName || "Unassigned"} -{" "}
                     {task.dueDate || task.deadline || "No deadline"}
                   </p>
                 </div>
@@ -63,7 +93,9 @@ export default async function TasksPage() {
                   >
                     {isRu ? "Открыть запись" : "Open record"}
                   </TrackedLink>
-                ) : null}
+                ) : (
+                  <span className="ghost-link">{isRu ? "Без связи" : "No record"}</span>
+                )}
               </article>
             ))}
           </div>
