@@ -13,11 +13,11 @@ export default async function DemoPage() {
     <main className="page-shell">
       <section className="page-heading">
         <p className="eyebrow">Demo Mode</p>
-        <h1>{isRu ? "Режим demo без регистрации" : "Demo mode without registration"}</h1>
+        <h1>{isRu ? "Demo-режим без регистрации" : "Demo mode without registration"}</h1>
         <p>
           {isRu
-            ? "Здесь можно покликать BOSE как тестовый пользователь: клиенты, сделки, задачи, AI и test-checklist."
-            : "This is the fast no-registration path: click through clients, deals, tasks, AI, and the launch checklist."}
+            ? "Здесь можно быстро прокликать BOSE как тестовый пользователь: клиенты, сделки, задачи и AI."
+            : "This is the fast no-registration path: click through clients, deals, tasks, and AI."}
         </p>
       </section>
 

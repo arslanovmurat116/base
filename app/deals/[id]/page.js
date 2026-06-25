@@ -37,14 +37,16 @@ export default async function DealDetailPage({ params }) {
       <section className="page-heading">
         <p className="eyebrow">Deal</p>
         <h1>{deal.title}</h1>
-        <p>{deal.stageKey} - {deal.status} - {deal.client?.displayName || "No client"}</p>
+        <p>
+          {deal.stageKey} - {deal.status} - {deal.client?.displayName || "No client"}
+        </p>
       </section>
 
       <section className="workboard-grid">
         <article className="panel workboard-panel">
           <div className="section-title">
             <p className="eyebrow">{isRu ? "Контекст" : "Context"}</p>
-            <h2>{isRu ? "Сделка BOSE Core" : "BOSE core deal"}</h2>
+            <h2>{isRu ? "Сделка в рабочем пространстве" : "Workspace deal"}</h2>
           </div>
           <div className="workboard-stack">
             <article className="work-item">
@@ -70,18 +72,18 @@ export default async function DealDetailPage({ params }) {
 
         <article className="panel workboard-panel">
           <div className="section-title">
-            <p className="eyebrow">{isRu ? "Следующие действия" : "Next clicks"}</p>
+            <p className="eyebrow">{isRu ? "Следующие действия" : "Next steps"}</p>
             <h2>{isRu ? "Куда перейти дальше" : "Where to go next"}</h2>
           </div>
           <div className="workboard-stack">
             {deal.lead?.slug ? (
               <article className="work-item">
                 <div>
-                  <strong>Legacy lead card</strong>
+                  <strong>{isRu ? "Детальная карточка" : "Detailed record"}</strong>
                   <p>
                     {isRu
-                      ? "Совместимый экран со всей старой мебельной логикой."
-                      : "Compatibility screen with the existing legacy lead flow."}
+                      ? "Открой расширенную карточку со всей текущей историей, файлами и рабочим контекстом."
+                      : "Open the detailed record with the full history, files, and workspace context."}
                   </p>
                 </div>
                 <TrackedLink

@@ -19,8 +19,7 @@ const displayFont = Lora({
 
 export const metadata = {
   title: "BOSE",
-  description:
-    "Business OS Engine for Telegram-first teams, with BOSE core entities, Mini App workflows, and Furneq as the first live module."
+  description: "BOSE is a Telegram business workspace for clients, deals, tasks, and AI-assisted operations."
 };
 
 export const dynamic = "force-dynamic";
@@ -39,11 +38,7 @@ export default async function RootLayout({ children }) {
               <div>
                 <strong>BOSE</strong>
                 <small>
-                  {pick(
-                    lang,
-                    "Business OS Engine for Telegram-first operations",
-                    "Business OS Engine для Telegram-first операций"
-                  )}
+                  {pick(lang, "Business OS Engine for Telegram workspaces", "Business OS Engine для Telegram-рабочих пространств")}
                 </small>
               </div>
             </Link>

@@ -19,8 +19,8 @@ export default async function ClientsPage() {
         <h1>{isRu ? "Клиенты" : "Clients"}</h1>
         <p>
           {isRu
-            ? "Все клиентские записи, которые уже живут в core-слое и готовы к тестовому запуску."
-            : "Client records already living in the BOSE core layer and ready for the Telegram launch."}
+            ? "Список клиентов, с которыми уже работает пространство BOSE."
+            : "A clear list of clients already captured inside the BOSE workspace."}
         </p>
       </section>
 

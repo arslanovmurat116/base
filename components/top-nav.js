@@ -12,7 +12,7 @@ export default function TopNav({ lang = "en" }) {
     { href: "/clients", label: lang === "ru" ? "Клиенты" : "Clients" },
     { href: "/deals", label: lang === "ru" ? "Сделки" : "Deals" },
     { href: "/tasks", label: lang === "ru" ? "Задачи" : "Tasks" },
-    { href: "/test", label: lang === "ru" ? "Тест" : "Test" }
+    { href: "/ai", label: "AI" }
   ];
 
   return (

@@ -23,21 +23,17 @@ export default async function HomePage() {
     <main className="page-shell landing-shell">
       <section className="hero-panel product-hero">
         <div className="hero-copy">
-          <p className="eyebrow">BOSE Launch Sprint</p>
-          <h1>
-            {isRu
-              ? "Telegram-first рабочая система, которую уже можно открыть и протестировать."
-              : "A Telegram-first business OS you can already open and test."}
-          </h1>
+          <p className="eyebrow">BOSE</p>
+          <h1>{isRu ? "Рабочее пространство для бизнеса внутри Telegram." : "A business workspace that runs inside Telegram."}</h1>
           <p className="hero-text">
             {isRu
-              ? "Открой BOSE, зайди в demo, посмотри клиентов, сделки, задачи, AI и Telegram setup без лишних объяснений."
-              : "Open BOSE, go through demo mode, inspect clients, deals, tasks, AI, and Telegram setup without needing a long explanation."}
+              ? "Открой BOSE, зайди в demo, посмотри клиентов, сделки, задачи и AI без лишних объяснений."
+              : "Open BOSE, enter demo mode, review clients, deals, tasks, and AI, and understand the product without a long explanation."}
           </p>
 
           <div className="quick-link-row">
             <TrackedLink className="primary-link" eventLabel="Open Workspace" eventSource="home" href="/dashboard">
-              Start / Open Workspace
+              Open Workspace
             </TrackedLink>
             <TrackedLink className="ghost-link" eventLabel="Demo Mode" eventSource="home" href="/demo">
               Demo Mode
@@ -54,9 +50,6 @@ export default async function HomePage() {
             <TrackedLink className="ghost-link" eventLabel="Tasks" eventSource="home" href="/tasks">
               Tasks
             </TrackedLink>
-            <TrackedLink className="ghost-link" eventLabel="Telegram Setup" eventSource="home" href="/test">
-              Telegram Setup
-            </TrackedLink>
           </div>
         </div>
       </section>
@@ -71,7 +64,7 @@ export default async function HomePage() {
             <h3>{isRu ? "Что такое BOSE" : "What BOSE is"}</h3>
             <p>
               {isRu
-                ? "Это Telegram-first Business OS: клиенты, сделки, задачи, события и AI в одном Mini App."
+                ? "Это рабочее пространство внутри Telegram: клиенты, сделки, задачи, события и AI в одном Mini App."
                 : "BOSE is a Telegram-first business OS: clients, deals, tasks, events, and AI in one Mini App."}
             </p>
           </article>
@@ -79,7 +72,7 @@ export default async function HomePage() {
             <h3>{isRu ? "Как начать" : "How to begin"}</h3>
             <p>
               {isRu
-                ? "Открой Demo Mode, запусти бота или сразу зайди в Workspace."
+                ? "Открой Demo Mode, запусти бота или сразу заходи в рабочее пространство."
                 : "Open Demo Mode, launch the bot, or jump directly into the workspace."}
             </p>
           </article>
@@ -87,7 +80,7 @@ export default async function HomePage() {
             <h3>{isRu ? "Зачем Telegram" : "Why Telegram"}</h3>
             <p>
               {isRu
-                ? "Telegram даёт вход, возврат, уведомления, deep links и Mini App поверх BOSE core."
+                ? "Telegram даёт вход, возврат, уведомления, deep links и Mini App как главный интерфейс."
                 : "Telegram gives BOSE the entrypoint, return path, notifications, deep links, and the Mini App shell."}
             </p>
           </article>
@@ -95,7 +88,7 @@ export default async function HomePage() {
             <h3>{isRu ? "Что делает AI" : "What AI does"}</h3>
             <p>
               {isRu
-                ? "AI даёт summary, next action, draft reply и ежедневную CRM-сводку."
+                ? "AI даёт summary, next action, draft reply и ежедневную сводку по рабочему пространству."
                 : "AI gives you summary, next action, draft reply, and a daily CRM digest."}
             </p>
           </article>
@@ -104,8 +97,8 @@ export default async function HomePage() {
 
       <section className="panel">
         <div className="section-title">
-          <p className="eyebrow">Launch Counters</p>
-          <h2>{isRu ? "Что уже живёт в базе" : "What is already live in the database"}</h2>
+          <p className="eyebrow">Workspace</p>
+          <h2>{isRu ? "Живой срез пространства" : "Live workspace snapshot"}</h2>
         </div>
         <div className="focus-grid">
           {dashboard.metrics.slice(0, 8).map((item) => (
@@ -117,18 +110,18 @@ export default async function HomePage() {
       <section className="panel">
         <div className="section-title">
           <p className="eyebrow">Telegram</p>
-          <h2>{isRu ? "Быстрые входы" : "Fast launch links"}</h2>
+          <h2>{isRu ? "Быстрые входы" : "Quick links"}</h2>
         </div>
         <div className="quick-link-row">
           <TrackedLink
             className="ghost-link"
-            eventLabel="Bot Demo"
+            eventLabel="Open Bot"
             eventSource="home"
             href={`${TELEGRAM_BOT_BASE_HREF}?start=demo`}
             rel="noreferrer"
             target="_blank"
           >
-            Open Bot Demo
+            Open Bot
           </TrackedLink>
           <TrackedLink
             className="ghost-link"

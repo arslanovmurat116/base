@@ -19,8 +19,8 @@ export default async function DealsPage() {
         <h1>{isRu ? "Сделки" : "Deals"}</h1>
         <p>
           {isRu
-            ? "Core-сделки, уже связанные с клиентами и готовые к просмотру в Mini App."
-            : "Core deals already linked to clients and ready to be explored inside the Mini App."}
+            ? "Сделки, связанные с клиентами и готовые к дальнейшей работе внутри BOSE."
+            : "Deals linked to clients and ready to move forward inside the workspace."}
         </p>
       </section>
 
@@ -31,6 +31,11 @@ export default async function DealsPage() {
               <p className="eyebrow">{isRu ? "Пусто" : "Empty state"}</p>
               <h2>{isRu ? "Сделок пока нет" : "No deals yet"}</h2>
             </div>
+            <p>
+              {isRu
+                ? "Создай первую заявку через Telegram, включи demo-режим или спроси AI, с чего начать."
+                : "Create the first Telegram request, open demo mode, or ask AI what to do next."}
+            </p>
             <EmptyStateActions lang={lang} />
           </>
         ) : (

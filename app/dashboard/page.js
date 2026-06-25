@@ -44,12 +44,12 @@ export default async function DashboardPage() {
   return (
     <main className="page-shell">
       <section className="page-heading">
-        <p className="eyebrow">BOSE RC1</p>
+        <p className="eyebrow">BOSE</p>
         <h1>{isRu ? "Панель BOSE" : "BOSE Dashboard"}</h1>
         <p>
           {isRu
-            ? "Первый launch dashboard: users, sessions, clients, deals, задачи и живые события."
-            : "The launch dashboard for users, sessions, clients, deals, tasks, and live business events."}
+            ? "Панель с пользователями, сессиями, клиентами, сделками, задачами и AI-подсказками."
+            : "A clear view of users, sessions, clients, deals, tasks, and AI recommendations."}
         </p>
       </section>
 
@@ -73,7 +73,7 @@ export default async function DashboardPage() {
                 <QueueEntry key={stage} title={stage} meta={`${total} deal(s)`} />
               ))
             ) : (
-              <QueueEntry title="No stage data yet" meta="Core deals will appear here." />
+              <QueueEntry title="No stage data yet" meta="Deals will appear here as soon as the workspace starts moving." />
             )}
           </div>
         </article>
@@ -117,7 +117,7 @@ export default async function DashboardPage() {
                 />
               ))
             ) : (
-              <QueueEntry title="No clients yet" meta="Create the first Telegram lead or open demo mode." />
+              <QueueEntry title="No clients yet" meta="Create the first Telegram request or open demo mode." />
             )}
           </div>
         </article>
@@ -139,7 +139,7 @@ export default async function DashboardPage() {
                 />
               ))
             ) : (
-              <QueueEntry title="No deals yet" meta="Create the first Telegram lead or open demo mode." />
+              <QueueEntry title="No deals yet" meta="Create the first Telegram request or open demo mode." />
             )}
           </div>
         </article>

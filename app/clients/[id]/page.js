@@ -37,7 +37,9 @@ export default async function ClientDetailPage({ params }) {
       <section className="page-heading">
         <p className="eyebrow">Client</p>
         <h1>{client.displayName}</h1>
-        <p>{(client.primaryPhone || "No phone")} - {client.status}</p>
+        <p>
+          {client.primaryPhone || "No phone"} - {client.status}
+        </p>
       </section>
 
       <section className="workboard-grid">
@@ -74,7 +76,7 @@ export default async function ClientDetailPage({ params }) {
         <article className="panel workboard-panel">
           <div className="section-title">
             <p className="eyebrow">{isRu ? "Связанные сделки" : "Related deals"}</p>
-            <h2>{isRu ? "Куда идти дальше" : "Where to click next"}</h2>
+            <h2>{isRu ? "Куда перейти дальше" : "Where to click next"}</h2>
           </div>
           <div className="workboard-stack">
             {client.relatedDeals?.length ? (
@@ -82,7 +84,9 @@ export default async function ClientDetailPage({ params }) {
                 <article className="work-item" key={deal.id}>
                   <div>
                     <strong>{deal.title}</strong>
-                    <p>{deal.stageKey} - {deal.status}</p>
+                    <p>
+                      {deal.stageKey} - {deal.status}
+                    </p>
                   </div>
                   <TrackedLink
                     className="ghost-link"
@@ -96,7 +100,7 @@ export default async function ClientDetailPage({ params }) {
               ))
             ) : (
               <>
-                <p>{isRu ? "У клиента пока нет сделок." : "No deals are linked to this client yet."}</p>
+                <p>{isRu ? "У клиента пока нет связанных сделок." : "No deals are linked to this client yet."}</p>
                 <EmptyStateActions lang={lang} />
               </>
             )}

@@ -13,6 +13,7 @@ export default async function AIPage() {
   const [crmSummary, leads] = await Promise.all([getAICRMSummary(), getLeadsData()]);
   const sampleLead = leads[0] || null;
   const salesSummary = sampleLead ? await getLeadAISalesAssistantData(sampleLead.slug) : null;
+  const relatedDealId = sampleLead?.boseCore?.deal?.id || null;
   const isRu = lang === "ru";
 
   return (
@@ -23,8 +24,8 @@ export default async function AIPage() {
         <h1>AI Assistant</h1>
         <p>
           {isRu
-            ? "Единый AI MVP-слой: summary, next action, draft reply и CRM digest."
-            : "One shared AI MVP layer for summaries, next actions, draft replies, and CRM digests."}
+            ? "Один AI-слой для summary, next action, draft reply и ежедневной сводки по рабочему пространству."
+            : "One AI layer for summaries, next actions, draft replies, and daily workspace guidance."}
         </p>
       </section>
 
@@ -58,9 +59,9 @@ export default async function AIPage() {
                 className="ghost-link"
                 eventLabel="AI Sales Assistant"
                 eventSource="ai-page"
-                href={sampleLead?.slug ? `/leads/${sampleLead.slug}` : "/deals"}
+                href={relatedDealId ? `/deals/${relatedDealId}` : sampleLead?.slug ? `/leads/${sampleLead.slug}` : "/deals"}
               >
-                {isRu ? "Открыть исходную сделку" : "Open source deal"}
+                {isRu ? "Открыть связанную сделку" : "Open related deal"}
               </TrackedLink>
             </div>
           ) : (
@@ -97,8 +98,8 @@ export default async function AIPage() {
                 </div>
               </article>
             ))}
-            <TrackedLink className="ghost-link" eventLabel="Ask AI" eventSource="ai-page" href="/api/ai/crm/summary">
-              {isRu ? "Открыть raw AI summary" : "Open raw AI summary"}
+            <TrackedLink className="ghost-link" eventLabel="Open Dashboard" eventSource="ai-page" href="/dashboard">
+              {isRu ? "Открыть панель" : "Open dashboard"}
             </TrackedLink>
           </div>
         </article>

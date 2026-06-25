@@ -3,7 +3,7 @@ import { getLaunchDebugData } from "../../lib/server-data";
 import { getLanguage } from "../../lib/i18n-server";
 
 export const metadata = {
-  title: "Test | BOSE"
+  title: "System Check | BOSE"
 };
 
 function StatusRow({ item }) {
@@ -26,12 +26,12 @@ export default async function TestPage() {
   return (
     <main className="page-shell">
       <section className="page-heading">
-        <p className="eyebrow">BOSE Launch Test</p>
-        <h1>{isRu ? "Тестовый чеклист" : "Test checklist"}</h1>
+        <p className="eyebrow">BOSE System Check</p>
+        <h1>{isRu ? "Системная проверка" : "System checklist"}</h1>
         <p>
           {isRu
-            ? "Быстрая страница для запуска: webhook, db, analytics, Mini App auth и AI env."
-            : "Fast launch page for webhook, database, analytics, Mini App auth, and AI env."}
+            ? "Внутренняя страница для проверки webhook, базы, аналитики, Mini App auth и AI env."
+            : "Internal page for webhook, database, analytics, Mini App auth, and AI env checks."}
         </p>
       </section>
 

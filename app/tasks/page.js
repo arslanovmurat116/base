@@ -29,8 +29,8 @@ export default async function TasksPage() {
         <h1>{isRu ? "Задачи" : "Tasks"}</h1>
         <p>
           {isRu
-            ? "Командные задачи из текущего рабочего контура. Legacy lead-слой ещё живёт рядом, но Tasks уже можно кликать как BOSE surface."
-            : "Team tasks from the current working loop. The legacy lead layer still exists, but tasks are already usable as a BOSE surface."}
+            ? "Задачи, которые помогают команде двигать клиентов и сделки вперёд."
+            : "Tasks that help the team move clients and deals forward."}
         </p>
       </section>
 
@@ -61,7 +61,7 @@ export default async function TasksPage() {
                     eventSource="tasks-list"
                     href={`/leads/${task.slug}`}
                   >
-                    {isRu ? "Открыть lead" : "Open lead"}
+                    {isRu ? "Открыть запись" : "Open record"}
                   </TrackedLink>
                 ) : null}
               </article>
