@@ -105,6 +105,8 @@ async function main() {
         select 'telegram_identities', count(*)::int from telegram_identities
         union all
         select 'telegram_analytics_events', count(*)::int from telegram_analytics_events
+        union all
+        select 'telegram_bot_requests', count(*)::int from telegram_bot_requests
       `
     );
 

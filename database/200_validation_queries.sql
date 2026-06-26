@@ -46,6 +46,8 @@ select 'telegram_identities', count(*) from telegram_identities
 union all
 select 'telegram_analytics_events', count(*) from telegram_analytics_events
 union all
+select 'telegram_bot_requests', count(*) from telegram_bot_requests
+union all
 select 'daily_reports', count(*) from daily_reports;
 
 select id, full_name, source, channel, status, assigned_user_id, created_at

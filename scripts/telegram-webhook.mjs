@@ -8,9 +8,7 @@ function getWebhookUrl(baseUrl) {
 
 function ensureHttpsUrl(baseUrl) {
   if (!/^https:\/\//i.test(baseUrl)) {
-    throw new Error(
-      "APP_BASE_URL должен быть публичным https-адресом, чтобы Telegram принял webhook."
-    );
+    throw new Error("APP_BASE_URL must be a public https URL for Telegram webhook setup.");
   }
 }
 
@@ -71,21 +69,37 @@ async function main() {
   if (action === "commands") {
     const result = await callTelegramApi(config.token, "setMyCommands", {
       commands: [
-        { command: "start", description: "Запуск и помощь" },
-        { command: "help", description: "Список команд" },
-        { command: "register", description: "Привязать роль и имя" },
-        { command: "status", description: "Проверить привязку чата" },
-        { command: "today", description: "Сводка на сегодня" },
-        { command: "control", description: "Контроль по срокам и замерам" },
-        { command: "alerts", description: "Просрочки и возвраты" },
-        { command: "appointments", description: "Замеры и встречи" }
+        { command: "start", description: "Open BOSE and help" },
+        { command: "help", description: "Show commands" },
+        { command: "register", description: "Register team role" },
+        { command: "status", description: "Show chat status" },
+        { command: "app", description: "Open BOSE workspace" },
+        { command: "add", description: "Open bot actions" },
+        { command: "today", description: "Today summary" },
+        { command: "summary", description: "AI daily summary" },
+        { command: "control", description: "Control queues" },
+        { command: "alerts", description: "Overdue alerts" },
+        { command: "appointments", description: "Appointments" },
+        { command: "clients", description: "Open clients" },
+        { command: "deals", description: "Open deals" },
+        { command: "tasks", description: "Open tasks" },
+        { command: "ai", description: "Open AI assistant" },
+        { command: "newclient", description: "Create client" },
+        { command: "newdeal", description: "Create deal" },
+        { command: "newtask", description: "Create task" },
+        { command: "followup", description: "Create follow-up" },
+        { command: "askai", description: "Ask BOSE AI" },
+        { command: "feedback", description: "Send feedback" },
+        { command: "feature", description: "Request feature" },
+        { command: "support", description: "Request support" },
+        { command: "file", description: "Send file for review" }
       ]
     });
     console.log(JSON.stringify({ ok: true, result }, null, 2));
     return;
   }
 
-  throw new Error(`Неизвестное действие: ${action}`);
+  throw new Error(`Unknown action: ${action}`);
 }
 
 main().catch((error) => {
