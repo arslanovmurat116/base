@@ -5,18 +5,18 @@ const TELEGRAM_BOT_BASE_HREF = "https://t.me/bose_business_os_bot";
 const SHORTCUTS = {
   dashboard: {
     href: "/dashboard",
-    label: { en: "Open Workspace", ru: "Открыть рабочее пространство" },
+    label: { en: "Open Workspace", ru: "Открыть BOSE" },
     note: { en: "Go to the main BOSE dashboard.", ru: "Перейти в главную панель BOSE." }
   },
   demo: {
     href: "/demo",
     label: { en: "Demo Mode", ru: "Демо-режим" },
-    note: { en: "Open safe sample data and click through the flow.", ru: "Открыть демо-данные и быстро прокликать сценарий." }
+    note: { en: "Open safe sample data and click through the flow.", ru: "Открыть тестовые данные и быстро пройти сценарий." }
   },
   clients: {
     href: "/clients",
     label: { en: "Clients", ru: "Клиенты" },
-    note: { en: "See who is already in the workspace.", ru: "Посмотреть, кто уже находится в рабочем пространстве." }
+    note: { en: "See who is already in the workspace.", ru: "Посмотреть, кто уже есть в рабочем пространстве." }
   },
   deals: {
     href: "/deals",
@@ -31,7 +31,12 @@ const SHORTCUTS = {
   ai: {
     href: "/ai",
     label: { en: "AI Assistant", ru: "AI-ассистент" },
-    note: { en: "Open summaries, next actions, and reply drafts.", ru: "Открыть summary, next action и draft reply." }
+    note: { en: "Open summaries, next actions, and reply drafts.", ru: "Открыть сводки, следующие шаги и черновики ответов." }
+  },
+  pricing: {
+    href: "/pricing",
+    label: { en: "Pricing", ru: "Тарифы" },
+    note: { en: "See Free, Pro, and Business plans.", ru: "Посмотреть планы Free, Pro и Business." }
   },
   bot: {
     href: `${TELEGRAM_BOT_BASE_HREF}?start=demo`,
@@ -42,7 +47,7 @@ const SHORTCUTS = {
   request: {
     href: `${TELEGRAM_BOT_BASE_HREF}?start=request`,
     label: { en: "Start Request", ru: "Запустить заявку" },
-    note: { en: "Run the client intake flow from Telegram.", ru: "Запустить клиентский intake flow из Telegram." },
+    note: { en: "Run the client intake flow from Telegram.", ru: "Запустить клиентский сценарий приёма заявки из Telegram." },
     external: true
   }
 };

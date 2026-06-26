@@ -1452,6 +1452,18 @@ select {
   margin-bottom: 14px;
 }
 
+.plan-card h3 {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
+.feature-list li::before,
+.hero-card-list li::before {
+  content: "•";
+}
+
 @media (max-width: 980px) {
   .hero-panel,
   .stats-grid,

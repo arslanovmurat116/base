@@ -6,6 +6,7 @@ import TopNav from "../components/top-nav";
 import MiniAppLaunchClient from "../components/miniapp-launch-client";
 import { pick } from "../lib/i18n";
 import { getLanguage } from "../lib/i18n-server";
+import { getOwnerAccessState } from "../lib/owner-access-server";
 
 const bodyFont = Manrope({
   subsets: ["latin", "cyrillic"],
@@ -19,13 +20,14 @@ const displayFont = Lora({
 
 export const metadata = {
   title: "BOSE",
-  description: "BOSE is a Telegram business workspace for clients, deals, tasks, and AI-assisted operations."
+  description: "BOSE is a Telegram-first business workspace for clients, deals, tasks, analytics, and AI guidance."
 };
 
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }) {
   const lang = await getLanguage();
+  const ownerAccess = await getOwnerAccessState();
 
   return (
     <html lang={lang}>
@@ -38,12 +40,12 @@ export default async function RootLayout({ children }) {
               <div>
                 <strong>BOSE</strong>
                 <small>
-                  {pick(lang, "Business OS Engine for Telegram workspaces", "Business OS Engine для Telegram-рабочих пространств")}
+                  {pick(lang, "Business OS Engine for Telegram workspaces", "Операционная система для Telegram-рабочих пространств")}
                 </small>
               </div>
             </Link>
             <Suspense fallback={null}>
-              <TopNav lang={lang} />
+              <TopNav lang={lang} ownerMode={ownerAccess.isOwner} />
             </Suspense>
           </header>
           {children}

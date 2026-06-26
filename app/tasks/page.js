@@ -19,7 +19,20 @@ function flattenTasks(columns = []) {
 
 function formatLaneLabel(value, lang) {
   const source = String(value || "");
+
   if (lang === "ru") {
+    if (source === "Urgent") {
+      return "Срочно";
+    }
+
+    if (source === "In progress") {
+      return "В работе";
+    }
+
+    if (source === "Closing") {
+      return "На дожим";
+    }
+
     return source;
   }
 
@@ -61,7 +74,7 @@ export default async function TasksPage() {
           <p className="eyebrow">{isRu ? "Быстрый старт" : "Quick start"}</p>
           <h2>{isRu ? "Навигация по задачам" : "Task workspace shortcuts"}</h2>
         </div>
-        <WorkspaceShortcuts lang={lang} eventSource="tasks-shortcuts" items={["dashboard", "clients", "deals", "ai"]} />
+        <WorkspaceShortcuts lang={lang} eventSource="tasks-shortcuts" items={["dashboard", "clients", "deals", "ai", "pricing"]} />
       </section>
 
       <section className="panel">
@@ -71,6 +84,11 @@ export default async function TasksPage() {
               <p className="eyebrow">{isRu ? "Пусто" : "Empty state"}</p>
               <h2>{isRu ? "Задач пока нет" : "No tasks yet"}</h2>
             </div>
+            <p>
+              {isRu
+                ? "Сначала создай клиента, сделку или заявку через Telegram, и задачи появятся автоматически."
+                : "Create a client, a deal, or a Telegram request first, and BOSE will start generating tasks."}
+            </p>
             <EmptyStateActions lang={lang} />
           </>
         ) : (
@@ -80,8 +98,8 @@ export default async function TasksPage() {
                 <div>
                   <strong>{task.title || (isRu ? "Задача" : "Task")}</strong>
                   <p>
-                    {formatLaneLabel(task.laneLabel, lang)} - {task.owner || task.ownerName || "Unassigned"} -{" "}
-                    {task.dueDate || task.deadline || "No deadline"}
+                    {formatLaneLabel(task.laneLabel, lang)} - {task.owner || task.ownerName || (isRu ? "Не назначен" : "Unassigned")} -{" "}
+                    {task.dueDate || task.deadline || (isRu ? "Без дедлайна" : "No deadline")}
                   </p>
                 </div>
                 {task.slug ? (
@@ -94,7 +112,7 @@ export default async function TasksPage() {
                     {isRu ? "Открыть запись" : "Open record"}
                   </TrackedLink>
                 ) : (
-                  <span className="ghost-link">{isRu ? "Без связи" : "No record"}</span>
+                  <span className="ghost-link">{isRu ? "Без записи" : "No record"}</span>
                 )}
               </article>
             ))}

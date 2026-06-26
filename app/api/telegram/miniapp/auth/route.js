@@ -5,6 +5,7 @@ import {
   getMiniAppAuthPlan,
   verifyTelegramMiniAppInitData
 } from "../../../../../lib/telegram/miniapp-auth";
+import { isOwnerIdentity } from "../../../../../lib/owner-access";
 import { recordMiniAppLaunch } from "../../../../../lib/telegram/analytics";
 
 export async function GET() {
@@ -50,6 +51,15 @@ export async function POST(request) {
       sessionCandidate,
       session,
       profile: launch?.profile || null,
+      subject: launch?.subject || null,
+      ownerAccess: {
+        isOwner: isOwnerIdentity({
+          coreRole: launch?.subject?.role || null,
+          subjectRole: launch?.subject?.role || null,
+          username: launch?.profile?.username || sessionCandidate?.telegramUsername || null,
+          telegramUserId: launch?.profile?.telegramUserId || sessionCandidate?.telegramUserId || null
+        })
+      },
       analytics: launch?.flags || null
     });
   } catch (error) {

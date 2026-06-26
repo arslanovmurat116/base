@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import LanguageToggle from "./language-toggle";
 import TrackedLink from "./tracked-link";
 
-export default function TopNav({ lang = "en" }) {
+export default function TopNav({ lang = "en", ownerMode = false }) {
   const pathname = usePathname();
   const navItems = [
     { href: "/", label: lang === "ru" ? "Главная" : "Home" },
@@ -12,8 +12,16 @@ export default function TopNav({ lang = "en" }) {
     { href: "/clients", label: lang === "ru" ? "Клиенты" : "Clients" },
     { href: "/deals", label: lang === "ru" ? "Сделки" : "Deals" },
     { href: "/tasks", label: lang === "ru" ? "Задачи" : "Tasks" },
-    { href: "/ai", label: "AI" }
+    { href: "/ai", label: "AI" },
+    { href: "/pricing", label: lang === "ru" ? "Тарифы" : "Pricing" }
   ];
+
+  if (ownerMode) {
+    navItems.push({
+      href: "/owner",
+      label: lang === "ru" ? "Владелец" : "Owner"
+    });
+  }
 
   return (
     <div className="topnav-shell">

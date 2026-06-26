@@ -107,6 +107,8 @@ async function main() {
         select 'telegram_analytics_events', count(*)::int from telegram_analytics_events
         union all
         select 'telegram_bot_requests', count(*)::int from telegram_bot_requests
+        union all
+        select 'telegram_retention_campaigns', count(*)::int from telegram_retention_campaigns
       `
     );
 
@@ -162,6 +164,19 @@ async function main() {
         where f.status = 'PENDING'
         order by f.scheduled_at asc
         limit 10
+      `
+    );
+
+    await printTable(
+      "RETENTION_LIFECYCLE",
+      `
+        select
+          count(*) filter (where coalesce(bot_launch_count, 0) + coalesce(miniapp_launch_count, 0) <= 1 and last_seen_at >= now() - interval '1 day')::int as new_users,
+          count(*) filter (where coalesce(bot_launch_count, 0) + coalesce(miniapp_launch_count, 0) >= 2 and active_days_count < 3 and last_seen_at >= now() - interval '7 days')::int as activated_users,
+          count(*) filter (where active_days_count >= 3 and last_seen_at >= now() - interval '7 days')::int as engaged_users,
+          count(*) filter (where last_seen_at < now() - interval '7 days' and last_seen_at >= now() - interval '30 days')::int as dormant_users,
+          count(*) filter (where last_seen_at < now() - interval '30 days')::int as inactive_users
+        from telegram_identities
       `
     );
 

@@ -12,8 +12,8 @@ export default async function DemoPage() {
   return (
     <main className="page-shell">
       <section className="page-heading">
-        <p className="eyebrow">Demo Mode</p>
-        <h1>{isRu ? "Demo-режим без регистрации" : "Demo mode without registration"}</h1>
+        <p className="eyebrow">{isRu ? "Демо-режим" : "Demo Mode"}</p>
+        <h1>{isRu ? "Демо-режим без регистрации" : "Demo mode without registration"}</h1>
         <p>
           {isRu
             ? "Здесь можно быстро прокликать BOSE как тестовый пользователь: клиенты, сделки, задачи и AI."
@@ -24,7 +24,7 @@ export default async function DemoPage() {
       <section className="panel">
         <div className="quick-link-row">
           <TrackedLink className="primary-link" eventLabel="Open Workspace" eventSource="demo-page" href="/dashboard">
-            {isRu ? "Открыть Workspace" : "Open Workspace"}
+            {isRu ? "Открыть BOSE" : "Open workspace"}
           </TrackedLink>
           <TrackedLink className="ghost-link" eventLabel="Demo Clients" eventSource="demo-page" href="/clients">
             {isRu ? "Клиенты" : "Clients"}

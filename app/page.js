@@ -4,6 +4,33 @@ import { getLanguage } from "../lib/i18n-server";
 
 const TELEGRAM_BOT_BASE_HREF = "https://t.me/bose_business_os_bot";
 
+const METRIC_COPY = {
+  users: {
+    ru: { label: "Пользователи", note: "Люди, которых BOSE уже сохранил через Telegram и Mini App." }
+  },
+  "active-users": {
+    ru: { label: "Активные", note: "Пользователи, которые были в системе за последние 14 дней." }
+  },
+  sessions: {
+    ru: { label: "Сессии", note: "Сессии Mini App для аналитики и удержания." }
+  },
+  "new-users": {
+    ru: { label: "Новые", note: "Новые пользователи за последние сутки." }
+  },
+  clients: {
+    ru: { label: "Клиенты", note: "Клиентские записи, уже доступные в BOSE." }
+  },
+  deals: {
+    ru: { label: "Сделки", note: "Сделки, которые уже двигаются внутри BOSE." }
+  },
+  tasks: {
+    ru: { label: "Задачи", note: "Открытые задачи команды." }
+  },
+  followups: {
+    ru: { label: "Следующие контакты", note: "Контакты, которые нельзя потерять." }
+  }
+};
+
 function MetricCard({ label, value, note }) {
   return (
     <article className="focus-card">
@@ -14,41 +41,60 @@ function MetricCard({ label, value, note }) {
   );
 }
 
+function localizeMetric(item, lang) {
+  if (lang !== "ru") {
+    return item;
+  }
+
+  const copy = METRIC_COPY[item.key]?.ru;
+
+  if (!copy) {
+    return item;
+  }
+
+  return {
+    ...item,
+    label: copy.label,
+    note: copy.note
+  };
+}
+
 export default async function HomePage() {
   const lang = await getLanguage();
   const dashboard = await getBOSEDashboardData();
   const isRu = lang === "ru";
+  const metrics = dashboard.metrics.slice(0, 6).map((item) => localizeMetric(item, lang));
 
   return (
     <main className="page-shell landing-shell">
       <section className="hero-panel product-hero">
         <div className="hero-copy">
           <p className="eyebrow">BOSE</p>
-          <h1>{isRu ? "Рабочее пространство для бизнеса внутри Telegram." : "A business workspace that runs inside Telegram."}</h1>
+          <h1>{isRu ? "Бизнес работает внутри Telegram." : "Run the workspace inside Telegram."}</h1>
           <p className="hero-text">
             {isRu
-              ? "Открой BOSE, зайди в demo, посмотри клиентов, сделки, задачи и AI без лишних объяснений."
-              : "Open BOSE, enter demo mode, review clients, deals, tasks, and AI, and understand the product without a long explanation."}
+              ? "BOSE объединяет клиентов, сделки, задачи, аналитику и AI в одном Mini App. Новый пользователь должен понять это без инструкций и без лишних экранов."
+              : "BOSE brings clients, deals, tasks, analytics, and AI into one Mini App. A new user should understand it without instructions or extra screens."}
           </p>
 
           <div className="quick-link-row">
             <TrackedLink className="primary-link" eventLabel="Open Workspace" eventSource="home" href="/dashboard">
-              Open Workspace
+              {isRu ? "Открыть BOSE" : "Open Workspace"}
             </TrackedLink>
             <TrackedLink className="ghost-link" eventLabel="Demo Mode" eventSource="home" href="/demo">
-              Demo Mode
+              {isRu ? "Демо-режим" : "Demo Mode"}
             </TrackedLink>
             <TrackedLink className="ghost-link" eventLabel="AI Assistant" eventSource="home" href="/ai">
-              AI Assistant
+              {isRu ? "AI-ассистент" : "AI Assistant"}
             </TrackedLink>
             <TrackedLink className="ghost-link" eventLabel="Clients" eventSource="home" href="/clients">
-              Clients
+              {isRu ? "Клиенты" : "Clients"}
             </TrackedLink>
             <TrackedLink className="ghost-link" eventLabel="Deals" eventSource="home" href="/deals">
-              Deals
+              {isRu ? "Сделки" : "Deals"}
             </TrackedLink>
             <TrackedLink className="ghost-link" eventLabel="Tasks" eventSource="home" href="/tasks">
-              Tasks
+              {isRu ? "Задачи" : "Tasks"}
             </TrackedLink>
           </div>
         </div>
@@ -56,7 +102,7 @@ export default async function HomePage() {
 
       <section className="panel">
         <div className="section-title">
-          <p className="eyebrow">Onboarding</p>
+          <p className="eyebrow">{isRu ? "Старт" : "Onboarding"}</p>
           <h2>{isRu ? "Как начать за минуту" : "How to start in one minute"}</h2>
         </div>
         <div className="workboard-grid">
@@ -64,15 +110,15 @@ export default async function HomePage() {
             <h3>{isRu ? "Что такое BOSE" : "What BOSE is"}</h3>
             <p>
               {isRu
-                ? "Это рабочее пространство внутри Telegram: клиенты, сделки, задачи, события и AI в одном Mini App."
-                : "BOSE is a Telegram-first business OS: clients, deals, tasks, events, and AI in one Mini App."}
+                ? "Это рабочее пространство внутри Telegram для клиентов, сделок, задач, событий и AI."
+                : "It is a Telegram-first workspace for clients, deals, tasks, events, and AI."}
             </p>
           </article>
           <article className="panel demo-deal-card">
             <h3>{isRu ? "Как начать" : "How to begin"}</h3>
             <p>
               {isRu
-                ? "Открой Demo Mode, запусти бота или сразу заходи в рабочее пространство."
+                ? "Открой демо-режим, запусти бота или сразу переходи в основную панель."
                 : "Open Demo Mode, launch the bot, or jump directly into the workspace."}
             </p>
           </article>
@@ -80,16 +126,16 @@ export default async function HomePage() {
             <h3>{isRu ? "Зачем Telegram" : "Why Telegram"}</h3>
             <p>
               {isRu
-                ? "Telegram даёт вход, возврат, уведомления, deep links и Mini App как главный интерфейс."
-                : "Telegram gives BOSE the entrypoint, return path, notifications, deep links, and the Mini App shell."}
+                ? "Telegram даёт вход, возврат, быстрые ссылки, уведомления и саму оболочку Mini App."
+                : "Telegram gives BOSE the entrypoint, the return path, deep links, notifications, and the Mini App shell."}
             </p>
           </article>
           <article className="panel demo-deal-card">
             <h3>{isRu ? "Что делает AI" : "What AI does"}</h3>
             <p>
               {isRu
-                ? "AI даёт summary, next action, draft reply и ежедневную сводку по рабочему пространству."
-                : "AI gives you summary, next action, draft reply, and a daily CRM digest."}
+                ? "AI помогает со сводкой, следующим шагом, черновиком ответа и операционной сводкой."
+                : "AI helps with summary, next action, draft reply, and the operating digest."}
             </p>
           </article>
         </div>
@@ -97,13 +143,51 @@ export default async function HomePage() {
 
       <section className="panel">
         <div className="section-title">
-          <p className="eyebrow">Workspace</p>
-          <h2>{isRu ? "Живой срез пространства" : "Live workspace snapshot"}</h2>
+          <p className="eyebrow">{isRu ? "Панель" : "Workspace"}</p>
+          <h2>{isRu ? "Живой срез BOSE" : "Live BOSE snapshot"}</h2>
         </div>
         <div className="focus-grid">
-          {dashboard.metrics.slice(0, 8).map((item) => (
-            <MetricCard key={item.label} label={item.label} value={item.value} note={item.note} />
+          {metrics.map((item) => (
+            <MetricCard key={item.key} label={item.label} value={item.value} note={item.note} />
           ))}
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="section-title">
+          <p className="eyebrow">{isRu ? "Подписки" : "Plans"}</p>
+          <h2>{isRu ? "Подписки и доступ" : "Subscriptions and access"}</h2>
+        </div>
+        <div className="plan-grid">
+          <article className="panel plan-card">
+            <p className="eyebrow">Free</p>
+            <h3>{isRu ? "Первый запуск" : "First launch"}</h3>
+            <span className="plan-price">0 TON</span>
+            <p className="plan-note">
+              {isRu ? "Демо, бот и основные экраны BOSE." : "Demo mode, the bot, and the main BOSE surfaces."}
+            </p>
+          </article>
+          <article className="panel plan-card plan-card-accent">
+            <p className="eyebrow">Pro</p>
+            <h3>{isRu ? "Рабочий режим" : "Operational mode"}</h3>
+            <span className="plan-price">{isRu ? "Скоро" : "Soon"}</span>
+            <p className="plan-note">
+              {isRu ? "Клиенты, сделки, задачи, аналитика и AI в одном контуре." : "Clients, deals, tasks, analytics, and AI in one loop."}
+            </p>
+          </article>
+          <article className="panel plan-card">
+            <p className="eyebrow">Business</p>
+            <h3>{isRu ? "Командный доступ" : "Team access"}</h3>
+            <span className="plan-price">{isRu ? "Скоро" : "Soon"}</span>
+            <p className="plan-note">
+              {isRu ? "Режим владельца, удержание и будущий TON-платёжный слой." : "Owner mode, retention, and the future TON payment layer."}
+            </p>
+          </article>
+        </div>
+        <div className="quick-link-row">
+          <TrackedLink className="ghost-link" eventLabel="Pricing" eventSource="home" href="/pricing">
+            {isRu ? "Открыть тарифы" : "Open pricing"}
+          </TrackedLink>
         </div>
       </section>
 
@@ -121,7 +205,7 @@ export default async function HomePage() {
             rel="noreferrer"
             target="_blank"
           >
-            Open Bot
+            {isRu ? "Открыть бота" : "Open Bot"}
           </TrackedLink>
           <TrackedLink
             className="ghost-link"
@@ -131,13 +215,13 @@ export default async function HomePage() {
             rel="noreferrer"
             target="_blank"
           >
-            Start Client Request
+            {isRu ? "Запустить заявку" : "Start client request"}
           </TrackedLink>
           <TrackedLink className="ghost-link" eventLabel="Privacy" eventSource="home" href="/privacy">
-            Privacy Policy
+            {isRu ? "Политика" : "Privacy Policy"}
           </TrackedLink>
           <TrackedLink className="ghost-link" eventLabel="Terms" eventSource="home" href="/terms">
-            Terms
+            {isRu ? "Условия" : "Terms of Use"}
           </TrackedLink>
         </div>
       </section>

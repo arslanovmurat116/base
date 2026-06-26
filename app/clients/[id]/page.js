@@ -3,6 +3,31 @@ import EmptyStateActions from "../../../components/empty-state-actions";
 import { getCoreClientById } from "../../../lib/server-data";
 import { getLanguage } from "../../../lib/i18n-server";
 
+function localizeClientStatus(status, lang) {
+  const map = {
+    prospect: { en: "PROSPECT", ru: "лид" },
+    active: { en: "ACTIVE", ru: "активен" },
+    dormant: { en: "DORMANT", ru: "пауза" },
+    archived: { en: "ARCHIVED", ru: "архив" }
+  };
+  const entry = map[String(status || "").toLowerCase()];
+  return entry ? entry[lang === "ru" ? "ru" : "en"] : status;
+}
+
+function localizeDealStage(stage, lang) {
+  const map = {
+    new: { en: "new", ru: "новая" },
+    contacted: { en: "contacted", ru: "контакт" },
+    qualified: { en: "qualified", ru: "квалификация" },
+    appointment: { en: "appointment", ru: "встреча" },
+    proposal: { en: "proposal", ru: "предложение" },
+    won: { en: "won", ru: "успех" },
+    lost: { en: "lost", ru: "потеря" }
+  };
+  const entry = map[String(stage || "").toLowerCase()];
+  return entry ? entry[lang === "ru" ? "ru" : "en"] : stage;
+}
+
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
   const client = await getCoreClientById(resolvedParams.id);
@@ -38,7 +63,7 @@ export default async function ClientDetailPage({ params }) {
         <p className="eyebrow">Client</p>
         <h1>{client.displayName}</h1>
         <p>
-          {client.primaryPhone || "No phone"} - {client.status}
+          {client.primaryPhone || (isRu ? "Телефон не указан" : "No phone")} - {localizeClientStatus(client.status, lang)}
         </p>
       </section>
 
@@ -51,22 +76,22 @@ export default async function ClientDetailPage({ params }) {
           <div className="workboard-stack">
             <article className="work-item">
               <div>
-                <strong>{isRu ? "Владелец" : "Owner"}</strong>
+                <strong>{isRu ? "Ответственный" : "Owner"}</strong>
                 <p>{client.owner?.name || (isRu ? "Не назначен" : "Unassigned")}</p>
               </div>
             </article>
             <article className="work-item">
               <div>
                 <strong>Telegram</strong>
-                <p>{client.telegramUsername || client.telegramUserId || "Not linked yet"}</p>
+                <p>{client.telegramUsername || client.telegramUserId || (isRu ? "Пока не привязан" : "Not linked yet")}</p>
               </div>
             </article>
             <article className="work-item">
               <div>
                 <strong>{isRu ? "Сделки" : "Deals"}</strong>
                 <p>
-                  {client.stats?.totalDeals || 0} total - {client.stats?.openDeals || 0} open -{" "}
-                  {client.stats?.wonDeals || 0} won
+                  {client.stats?.totalDeals || 0} {isRu ? "всего" : "total"} - {client.stats?.openDeals || 0}{" "}
+                  {isRu ? "открыто" : "open"} - {client.stats?.wonDeals || 0} {isRu ? "выиграно" : "won"}
                 </p>
               </div>
             </article>
@@ -85,7 +110,7 @@ export default async function ClientDetailPage({ params }) {
                   <div>
                     <strong>{deal.title}</strong>
                     <p>
-                      {deal.stageKey} - {deal.status}
+                      {localizeDealStage(deal.stageKey, lang)} - {deal.status}
                     </p>
                   </div>
                   <TrackedLink

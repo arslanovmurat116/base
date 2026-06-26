@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { buildOwnerCookieValue, isOwnerIdentity } from "../lib/owner-access";
 
 const SESSION_STORAGE_KEY = "bose-miniapp-session";
 const SCREEN_STORAGE_PREFIX = "bose-screen-view:";
@@ -51,6 +52,14 @@ function shouldTrackScreen(pathname) {
 
   window.sessionStorage.setItem(key, "1");
   return true;
+}
+
+function syncOwnerCookie(enabled) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  document.cookie = buildOwnerCookieValue(Boolean(enabled));
 }
 
 async function postJson(url, body, options = {}) {
@@ -163,6 +172,17 @@ export default function MiniAppLaunchClient() {
 
         writeStoredSession(sessionPayload);
         sessionRef.current = sessionPayload;
+        syncOwnerCookie(
+          Boolean(
+            authResult?.ownerAccess?.isOwner ||
+              isOwnerIdentity({
+                coreRole: authResult?.subject?.role || null,
+                subjectRole: authResult?.subject?.role || null,
+                username: sessionPayload.username,
+                telegramUserId: sessionPayload.telegramUserId
+              })
+          )
+        );
       }
 
       if (shouldTrackScreen(pathname)) {

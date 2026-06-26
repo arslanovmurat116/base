@@ -9,6 +9,69 @@ export const metadata = {
   title: "AI | BOSE"
 };
 
+function getAiAvailabilityMessage(result, lang) {
+  if (result?.mode === "ai") {
+    return lang === "ru" ? "BOSE AI сейчас работает в live-режиме." : "BOSE AI is currently running in live mode.";
+  }
+
+  return lang === "ru"
+    ? "BOSE AI временно работает в безопасном локальном режиме и даёт понятные подсказки без ошибки."
+    : "BOSE AI is currently in safe local mode and will keep giving clean guidance instead of an error.";
+}
+
+function localizeDealStage(status, lang) {
+  const map = {
+    new: { en: "new", ru: "новая" },
+    contacted: { en: "contacted", ru: "контакт" },
+    qualified: { en: "qualified", ru: "квалификация" },
+    appointment: { en: "appointment", ru: "встреча" },
+    proposal: { en: "proposal", ru: "предложение" },
+    won: { en: "won", ru: "успех" },
+    lost: { en: "lost", ru: "потеря" }
+  };
+  const entry = map[String(status || "").toLowerCase()];
+  return entry ? entry[lang === "ru" ? "ru" : "en"] : status;
+}
+
+function getSalesAssistantView({ salesSummary, sampleLead, lang }) {
+  const isRu = lang === "ru";
+
+  if (!isRu || salesSummary?.mode === "ai") {
+    return {
+      summary: salesSummary?.data?.summary,
+      nextAction: salesSummary?.data?.nextAction,
+      replyDraft: salesSummary?.data?.replyDraft
+    };
+  }
+
+  return {
+    summary: `${sampleLead?.name || "Клиент"} сейчас на стадии ${localizeDealStage(sampleLead?.status || "NEW", lang)}. BOSE готов показать следующий шаг и безопасный черновик ответа.`,
+    nextAction: sampleLead?.nextAction || "Связаться с клиентом и уточнить детали запроса.",
+    replyDraft:
+      "Здравствуйте. Увидели ваш запрос и взяли его в работу. Могу быстро уточнить детали и предложить удобное окно для связи."
+  };
+}
+
+function getCrmAssistantView({ crmSummary, lang }) {
+  const isRu = lang === "ru";
+
+  if (!isRu || crmSummary?.mode === "ai") {
+    return {
+      dailyDigest: crmSummary.data?.dailyDigest,
+      overdueTasks: crmSummary.data?.overdueTasks,
+      workloadSummary: crmSummary.data?.workloadSummary,
+      recommendations: crmSummary.data?.managerRecommendations || []
+    };
+  }
+
+  return {
+    dailyDigest: "BOSE собрал безопасную локальную сводку по клиентам, сделкам, задачам и следующему касанию.",
+    overdueTasks: "Критичных просрочек сейчас нет или они ещё не накопились в живых данных.",
+    workloadSummary: "Как только живых данных станет больше, здесь появится полная AI-сводка по нагрузке команды.",
+    recommendations: ["Проверь текущие сделки и не оставляй клиентов без следующего шага."]
+  };
+}
+
 export default async function AIPage() {
   const lang = await getLanguage();
   const [crmSummary, leads] = await Promise.all([getAICRMSummary(), getLeadsData()]);
@@ -16,16 +79,18 @@ export default async function AIPage() {
   const salesSummary = sampleLead ? await getLeadAISalesAssistantData(sampleLead.slug) : null;
   const relatedDealId = sampleLead?.boseCore?.deal?.id || null;
   const isRu = lang === "ru";
+  const salesView = getSalesAssistantView({ salesSummary, sampleLead, lang });
+  const crmView = getCrmAssistantView({ crmSummary, lang });
 
   return (
     <main className="page-shell">
       <EventBeacon eventName="ai_used" eventPayload={{ surface: "ai-page", assistants: ["sales", "crm"] }} />
       <section className="page-heading">
         <p className="eyebrow">BOSE AI</p>
-        <h1>AI Assistant</h1>
+        <h1>{isRu ? "AI-ассистент" : "AI Assistant"}</h1>
         <p>
           {isRu
-            ? "Один AI-слой для summary, next action, draft reply и ежедневной сводки по рабочему пространству."
+            ? "Единый AI-слой для сводок, следующих шагов, черновиков ответов и ежедневной сводки по BOSE."
             : "One AI layer for summaries, next actions, draft replies, and daily workspace guidance."}
         </p>
       </section>
@@ -33,12 +98,12 @@ export default async function AIPage() {
       <section className="panel">
         <div className="section-title">
           <p className="eyebrow">{isRu ? "Быстрый старт" : "Quick start"}</p>
-          <h2>{isRu ? "Куда перейти после AI" : "Where to go after AI"}</h2>
+          <h2>{isRu ? "Куда идти после AI" : "Where to go after AI"}</h2>
         </div>
         <WorkspaceShortcuts
           lang={lang}
           eventSource="ai-shortcuts"
-          items={["dashboard", "clients", "deals", "tasks", "bot", "request"]}
+          items={["dashboard", "clients", "deals", "tasks", "bot", "request", "pricing"]}
         />
       </section>
 
@@ -52,20 +117,26 @@ export default async function AIPage() {
             <div className="workboard-stack">
               <article className="work-item">
                 <div>
-                  <strong>Summary</strong>
-                  <p>{salesSummary.data.summary}</p>
+                  <strong>{isRu ? "Сводка" : "Summary"}</strong>
+                  <p>{salesView.summary}</p>
                 </div>
               </article>
               <article className="work-item">
                 <div>
-                  <strong>Next Action</strong>
-                  <p>{salesSummary.data.nextAction}</p>
+                  <strong>{isRu ? "Следующий шаг" : "Next action"}</strong>
+                  <p>{salesView.nextAction}</p>
                 </div>
               </article>
               <article className="work-item">
                 <div>
-                  <strong>Draft Reply</strong>
-                  <p>{salesSummary.data.replyDraft}</p>
+                  <strong>{isRu ? "Черновик ответа" : "Draft reply"}</strong>
+                  <p>{salesView.replyDraft}</p>
+                </div>
+              </article>
+              <article className="work-item">
+                <div>
+                  <strong>{isRu ? "Состояние AI" : "AI state"}</strong>
+                  <p>{getAiAvailabilityMessage(salesSummary, lang)}</p>
                 </div>
               </article>
               <TrackedLink
@@ -93,17 +164,22 @@ export default async function AIPage() {
           <div className="workboard-stack">
             <article className="work-item">
               <div>
-                <strong>{crmSummary.data?.dailyDigest || "No digest yet"}</strong>
-                <p>{crmSummary.reason || ""}</p>
+                <strong>{crmView.dailyDigest || (isRu ? "Сводка пока недоступна" : "Digest is not available yet")}</strong>
+                <p>{getAiAvailabilityMessage(crmSummary, lang)}</p>
               </div>
             </article>
             <article className="work-item">
               <div>
-                <strong>{crmSummary.data?.overdueTasks || "No overdue tasks"}</strong>
-                <p>{crmSummary.data?.workloadSummary || ""}</p>
+                <strong>{crmView.overdueTasks || (isRu ? "Нет просроченных задач" : "No overdue tasks")}</strong>
+                <p>
+                  {crmView.workloadSummary ||
+                    (isRu
+                      ? "BOSE покажет сводку по нагрузке по мере накопления живых данных."
+                      : "BOSE will show the workload summary as live workspace data grows.")}
+                </p>
               </div>
             </article>
-            {(crmSummary.data?.managerRecommendations || []).map((item) => (
+            {crmView.recommendations.map((item) => (
               <article className="work-item" key={item}>
                 <div>
                   <strong>{item}</strong>

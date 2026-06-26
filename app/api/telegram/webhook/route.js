@@ -102,7 +102,7 @@ export async function POST(request) {
     return NextResponse.json(
       {
         ok: false,
-        message: "Webhook обработан с ошибкой",
+        message: "Webhook handled with an internal error",
         error: error.message
       },
       { status: 200 }

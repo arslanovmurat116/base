@@ -1,6 +1,8 @@
+import { notFound } from "next/navigation";
 import TrackedLink from "../../components/tracked-link";
 import { getLaunchDebugData } from "../../lib/server-data";
 import { getLanguage } from "../../lib/i18n-server";
+import { getOwnerAccessState } from "../../lib/owner-access-server";
 
 export const metadata = {
   title: "System Check | BOSE"
@@ -19,9 +21,12 @@ function StatusRow({ item }) {
 }
 
 export default async function TestPage() {
-  const lang = await getLanguage();
-  const debug = await getLaunchDebugData();
+  const [lang, ownerAccess, debug] = await Promise.all([getLanguage(), getOwnerAccessState(), getLaunchDebugData()]);
   const isRu = lang === "ru";
+
+  if (!ownerAccess.isOwner) {
+    notFound();
+  }
 
   return (
     <main className="page-shell">
@@ -30,8 +35,8 @@ export default async function TestPage() {
         <h1>{isRu ? "Системная проверка" : "System checklist"}</h1>
         <p>
           {isRu
-            ? "Внутренняя страница для проверки webhook, базы, аналитики, Mini App auth и AI env."
-            : "Internal page for webhook, database, analytics, Mini App auth, and AI env checks."}
+            ? "Внутренняя страница для проверки webhook, базы, аналитики, Mini App auth, AI и retention."
+            : "Internal page for webhook, database, analytics, Mini App auth, AI, and retention checks."}
         </p>
       </section>
 
@@ -70,11 +75,18 @@ export default async function TestPage() {
               </article>
             ))}
           </div>
+          <div className="quick-link-row">
+            <span className="offer-feature">{`Ready: ${debug.retention?.campaigns?.ready || 0}`}</span>
+            <span className="chip-soft">{`Scheduled: ${debug.retention?.campaigns?.scheduled || 0}`}</span>
+          </div>
         </article>
       </section>
 
       <section className="panel">
         <div className="quick-link-row">
+          <TrackedLink className="ghost-link" eventLabel="Owner" eventSource="test-page" href="/owner">
+            /owner
+          </TrackedLink>
           <TrackedLink className="ghost-link" eventLabel="Health API" eventSource="test-page" href="/api/system/health">
             /api/system/health
           </TrackedLink>
@@ -82,10 +94,10 @@ export default async function TestPage() {
             /api/telegram/miniapp/auth
           </TrackedLink>
           <TrackedLink className="ghost-link" eventLabel="Privacy" eventSource="test-page" href="/privacy">
-            Privacy Policy
+            /privacy
           </TrackedLink>
           <TrackedLink className="ghost-link" eventLabel="Terms" eventSource="test-page" href="/terms">
-            Terms
+            /terms
           </TrackedLink>
         </div>
       </section>

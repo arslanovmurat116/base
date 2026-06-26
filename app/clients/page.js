@@ -8,6 +8,17 @@ export const metadata = {
   title: "Clients | BOSE"
 };
 
+function localizeClientStatus(status, lang) {
+  const map = {
+    prospect: { en: "PROSPECT", ru: "лид" },
+    active: { en: "ACTIVE", ru: "активен" },
+    dormant: { en: "DORMANT", ru: "пауза" },
+    archived: { en: "ARCHIVED", ru: "архив" }
+  };
+  const entry = map[String(status || "").toLowerCase()];
+  return entry ? entry[lang === "ru" ? "ru" : "en"] : status;
+}
+
 export default async function ClientsPage() {
   const lang = await getLanguage();
   const clients = await getCoreClientsData({ limit: 24 });
@@ -20,8 +31,8 @@ export default async function ClientsPage() {
         <h1>{isRu ? "Клиенты" : "Clients"}</h1>
         <p>
           {isRu
-            ? "Список клиентов, с которыми уже работает пространство BOSE."
-            : "A clear list of clients already captured inside the BOSE workspace."}
+            ? "Список клиентов, с которыми BOSE уже работает через Telegram и Mini App."
+            : "A clear list of clients already captured inside BOSE through Telegram and the Mini App."}
         </p>
       </section>
 
@@ -30,7 +41,7 @@ export default async function ClientsPage() {
           <p className="eyebrow">{isRu ? "Быстрый старт" : "Quick start"}</p>
           <h2>{isRu ? "Навигация по клиентам" : "Client workspace shortcuts"}</h2>
         </div>
-        <WorkspaceShortcuts lang={lang} eventSource="clients-shortcuts" items={["dashboard", "deals", "tasks", "ai"]} />
+        <WorkspaceShortcuts lang={lang} eventSource="clients-shortcuts" items={["dashboard", "deals", "tasks", "ai", "pricing"]} />
       </section>
 
       <section className="panel">
@@ -42,8 +53,8 @@ export default async function ClientsPage() {
             </div>
             <p>
               {isRu
-                ? "Можно начать с demo-режима, создать первую заявку через бота или сразу спросить AI."
-                : "Start with demo data, create the first Telegram request, or ask AI for the next step."}
+                ? "Можно начать с Demo Mode, создать первую заявку через бота или сразу спросить AI."
+                : "Start with Demo Mode, create the first Telegram request, or ask AI for the next step."}
             </p>
             <EmptyStateActions lang={lang} />
           </>
@@ -61,7 +72,8 @@ export default async function ClientsPage() {
                   <div>
                     <strong>{client.displayName}</strong>
                     <p>
-                      {client.primaryPhone || "No phone"} - {client.status} - {client.stats?.totalDeals || 0}{" "}
+                      {client.primaryPhone || (isRu ? "Телефон не указан" : "No phone")} -{" "}
+                      {localizeClientStatus(client.status, lang)} - {client.stats?.totalDeals || 0}{" "}
                       {isRu ? "сделок" : "deal(s)"}
                     </p>
                   </div>

@@ -48,6 +48,8 @@ select 'telegram_analytics_events', count(*) from telegram_analytics_events
 union all
 select 'telegram_bot_requests', count(*) from telegram_bot_requests
 union all
+select 'telegram_retention_campaigns', count(*) from telegram_retention_campaigns
+union all
 select 'daily_reports', count(*) from daily_reports;
 
 select id, full_name, source, channel, status, assigned_user_id, created_at
@@ -77,6 +79,14 @@ left join deals d
 where d.id is null
 order by l.created_at desc
 limit 50;
+
+select
+    count(*) filter (where coalesce(bot_launch_count, 0) + coalesce(miniapp_launch_count, 0) <= 1 and last_seen_at >= now() - interval '1 day') as new_users,
+    count(*) filter (where coalesce(bot_launch_count, 0) + coalesce(miniapp_launch_count, 0) >= 2 and active_days_count < 3 and last_seen_at >= now() - interval '7 days') as activated_users,
+    count(*) filter (where active_days_count >= 3 and last_seen_at >= now() - interval '7 days') as engaged_users,
+    count(*) filter (where last_seen_at < now() - interval '7 days' and last_seen_at >= now() - interval '30 days') as dormant_users,
+    count(*) filter (where last_seen_at < now() - interval '30 days') as inactive_users
+from telegram_identities;
 
 select conversation_id, sender_type, direction, created_at, message_text
 from lead_messages

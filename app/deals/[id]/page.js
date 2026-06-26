@@ -3,6 +3,20 @@ import EmptyStateActions from "../../../components/empty-state-actions";
 import { getCoreDealById } from "../../../lib/server-data";
 import { getLanguage } from "../../../lib/i18n-server";
 
+function localizeDealStage(stage, lang) {
+  const map = {
+    new: { en: "new", ru: "новая" },
+    contacted: { en: "contacted", ru: "контакт" },
+    qualified: { en: "qualified", ru: "квалификация" },
+    appointment: { en: "appointment", ru: "встреча" },
+    proposal: { en: "proposal", ru: "предложение" },
+    won: { en: "won", ru: "успех" },
+    lost: { en: "lost", ru: "потеря" }
+  };
+  const entry = map[String(stage || "").toLowerCase()];
+  return entry ? entry[lang === "ru" ? "ru" : "en"] : stage;
+}
+
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
   const deal = await getCoreDealById(resolvedParams.id);
@@ -38,7 +52,7 @@ export default async function DealDetailPage({ params }) {
         <p className="eyebrow">Deal</p>
         <h1>{deal.title}</h1>
         <p>
-          {deal.stageKey} - {deal.status} - {deal.client?.displayName || "No client"}
+          {localizeDealStage(deal.stageKey, lang)} - {deal.status} - {deal.client?.displayName || (isRu ? "Клиент не указан" : "No client")}
         </p>
       </section>
 
@@ -46,19 +60,19 @@ export default async function DealDetailPage({ params }) {
         <article className="panel workboard-panel">
           <div className="section-title">
             <p className="eyebrow">{isRu ? "Контекст" : "Context"}</p>
-            <h2>{isRu ? "Сделка в рабочем пространстве" : "Workspace deal"}</h2>
+            <h2>{isRu ? "Сделка внутри BOSE" : "Workspace deal"}</h2>
           </div>
           <div className="workboard-stack">
             <article className="work-item">
               <div>
                 <strong>{isRu ? "Клиент" : "Client"}</strong>
-                <p>{deal.client?.displayName || "Not linked"}</p>
+                <p>{deal.client?.displayName || (isRu ? "Не привязан" : "Not linked")}</p>
               </div>
             </article>
             <article className="work-item">
               <div>
                 <strong>{isRu ? "Оценка" : "Estimate"}</strong>
-                <p>{deal.amountEstimate != null ? `${deal.amountEstimate} ${deal.currency}` : "No estimate yet"}</p>
+                <p>{deal.amountEstimate != null ? `${deal.amountEstimate} ${deal.currency}` : isRu ? "Оценки пока нет" : "No estimate yet"}</p>
               </div>
             </article>
             <article className="work-item">
