@@ -59,8 +59,9 @@ scripts/           Bootstrap, validation, Telegram, and release scripts
 ## Local start
 
 ```powershell
+Copy-Item -LiteralPath ".env.example" -Destination ".env.local"
 npm install
-npm run dev
+.\start-dev.ps1
 ```
 
 If port `3000` is already in use:
@@ -69,19 +70,34 @@ If port `3000` is already in use:
 npm run dev -- --port 3004
 ```
 
+`start-dev.ps1` does not create `.env.local` automatically.
+If `.env.local` is missing, it stops with a clear error and prints the exact `Copy-Item` command to create it from `.env.example`.
+
 ## RC1 verification
 
 ```powershell
-npm run build
-npm run validate:live-db
 npm run check:system
 ```
 
-For the full release gate:
+For a strict runtime gate against `/api/system/health`:
+
+```powershell
+npm run check:system:ready
+```
+
+For the full release gate, start the app first and then run:
 
 ```powershell
 npm run check:rc
 ```
+
+`check:rc` now runs three layers in order:
+
+1. static release config check via `npm run check:launch-config`
+2. runtime health gate via `npm run check:system:ready`
+3. build and live database validation
+
+Mock mode is never release-ready.
 
 ## Documentation
 
@@ -127,6 +143,23 @@ npm run check:rc
 - `/api/telegram/webhook`
 - `/api/telegram/miniapp/auth`
 - `/api/telegram/miniapp/session/end`
+
+`/api/system/health` now returns these core fields:
+
+- `status`: `ok`, `warn`, or `error`
+- `mode`: `live`, `mock`, `degraded`, or `misconfigured`
+- `ready`: `true` only for release-ready live mode
+- `database`
+- `telegram`
+- `warnings`
+- `timestamp`
+
+Health mode semantics:
+
+- `live`: real configuration is present, live database is healthy, Telegram launch prerequisites are configured, and `ready` is `true`
+- `mock`: BOSE is reachable but using mock or fallback data; `ready` is `false`
+- `degraded`: some runtime parts work, but a required dependency or launch prerequisite is failing; `ready` is `false`
+- `misconfigured`: required core configuration is missing; `ready` is `false`
 
 ## Release posture
 

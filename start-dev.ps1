@@ -1,13 +1,23 @@
 $ErrorActionPreference = "Stop"
 
 $appDir = $PSScriptRoot
-$envExample = Join-Path $appDir ".env.local.example"
+$envExample = Join-Path $appDir ".env.example"
 $envLocal = Join-Path $appDir ".env.local"
 
-if (-not (Test-Path -LiteralPath $envLocal) -and (Test-Path -LiteralPath $envExample)) {
-    Copy-Item -LiteralPath $envExample -Destination $envLocal
-    Write-Host ".env.local created from .env.local.example"
+if (-not (Test-Path -LiteralPath $envExample -PathType Leaf)) {
+    throw "Missing environment template: $envExample"
 }
 
-Set-Location $appDir
-npm run dev
+if (-not (Test-Path -LiteralPath $envLocal -PathType Leaf)) {
+    $copyCommand = 'Copy-Item -LiteralPath "{0}" -Destination "{1}"' -f $envExample, $envLocal
+    throw "Missing local environment file: $envLocal`nCreate it with:`n$copyCommand"
+}
+
+Push-Location -LiteralPath $appDir
+
+try {
+    & npm run dev
+}
+finally {
+    Pop-Location
+}

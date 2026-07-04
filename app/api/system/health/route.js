@@ -8,30 +8,49 @@ import {
   getTelegramAnalyticsFoundationStatus,
   getTelegramLaunchMetrics
 } from "../../../../lib/telegram/analytics";
+import { evaluateSystemHealth } from "../../../../lib/system-health-core.mjs";
 
 export async function GET() {
-  const [database, env, launchMetrics] = await Promise.all([
+  const [databaseStatus, env, launchMetrics] = await Promise.all([
     checkDatabaseHealth(),
     Promise.resolve(getEnvironmentPublicSummary()),
     getTelegramLaunchMetrics()
   ]);
   const analytics = getTelegramAnalyticsFoundationStatus();
+  const telegram = {
+    configured: isTelegramBotConfigured()
+  };
+  const storage = {
+    blobEnabled: isBlobStoreEnabled()
+  };
+  const ai = getAIServiceStatus();
+  const health = evaluateSystemHealth({
+    env,
+    database: databaseStatus,
+    telegram,
+    analytics,
+    storage,
+    ai,
+    launchMetrics
+  });
 
   return NextResponse.json({
-    ok: env.ok && (database.ok || database.mode === "mock"),
+    ok: health.ok,
+    status: health.status,
+    mode: health.mode,
+    ready: health.ready,
+    database: health.database,
+    telegram: health.telegram,
+    warnings: health.warnings,
     release: "BOSE RC1",
-    timestamp: new Date().toISOString(),
+    timestamp: health.timestamp,
     env,
     services: {
-      database,
-      telegram: {
-        configured: isTelegramBotConfigured()
-      },
+      database: health.database,
+      telegram: health.telegram,
       analytics,
-      storage: {
-        blobEnabled: isBlobStoreEnabled()
-      },
-      ai: getAIServiceStatus()
+      storage,
+      ai
     },
     launchMetrics
   });
