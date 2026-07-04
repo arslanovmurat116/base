@@ -31,6 +31,10 @@ function readStoredSession() {
   return safeJsonParse(window.sessionStorage.getItem(SESSION_STORAGE_KEY));
 }
 
+export function readMiniAppSessionSnapshot() {
+  return readStoredSession();
+}
+
 function writeStoredSession(value) {
   if (typeof window === "undefined") {
     return;

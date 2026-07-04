@@ -24,6 +24,7 @@ const host = requireEnv("POSTGRES_HOST");
 const databaseName = requireEnv("POSTGRES_DATABASE");
 const user = requireEnv("POSTGRES_USER");
 const password = requireEnv("POSTGRES_PASSWORD");
+
 const pool = new Pool({
   host,
   port: Number(process.env.POSTGRES_PORT || 5432),
@@ -32,6 +33,7 @@ const pool = new Pool({
   password,
   ssl: process.env.POSTGRES_SSL === "true" ? { rejectUnauthorized: false } : false
 });
+
 async function printTable(title, text, params = []) {
   const result = await pool.query(text, params);
   console.log(`\n${title}`);
@@ -94,6 +96,8 @@ async function main() {
         select 'telegram_bot_requests', count(*)::int from telegram_bot_requests
         union all
         select 'telegram_retention_campaigns', count(*)::int from telegram_retention_campaigns
+        union all
+        select 'scenario_drafts', count(*)::int from scenario_drafts
       `
     );
 
@@ -162,6 +166,22 @@ async function main() {
           count(*) filter (where last_seen_at < now() - interval '7 days' and last_seen_at >= now() - interval '30 days')::int as dormant_users,
           count(*) filter (where last_seen_at < now() - interval '30 days')::int as inactive_users
         from telegram_identities
+      `
+    );
+
+    await printTable(
+      "RECENT_SCENARIO_DRAFTS",
+      `
+        select
+          id,
+          source,
+          category,
+          left(coalesce(ai_summary, raw_text), 120) as summary,
+          status,
+          created_at
+        from scenario_drafts
+        order by updated_at desc, created_at desc
+        limit 10
       `
     );
 

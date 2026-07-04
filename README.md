@@ -126,6 +126,8 @@ Mock mode is never release-ready, even if the HTTP endpoint is reachable.
 
 - Landing: `/`
 - Dashboard: `/dashboard`
+- Scenario Request: `/scenario-request`
+- Scenario Drafts: `/scenario-drafts`
 - Clients: `/clients`
 - Deals: `/deals`
 - Tasks: `/tasks`
@@ -179,6 +181,21 @@ HTTP contract for `/api/system/health`:
 - `degraded` returns HTTP `503`
 - `misconfigured` returns HTTP `503`
 - an internal health-check failure returns HTTP `500`
+
+## Scenario orders
+
+Telegram user flow:
+
+1. Send `/scenario` to the BOSE bot.
+2. Open the Mini App button for `/scenario-request`.
+3. Fill in the title, description, category, target platform, and constraints.
+4. BOSE stores the request with the verified Telegram Mini App session identity.
+
+Owner flow:
+
+1. Open `/scenario-drafts` in owner mode.
+2. Review the request, update the status, and export it for WorkHub.
+3. The export button downloads a WorkHub-compatible JSON file.
 
 ## Release posture
 

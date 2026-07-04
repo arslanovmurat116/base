@@ -131,6 +131,9 @@ export default async function OwnerPage() {
             <h2>{isRu ? "Инструменты владельца" : "Owner tools"}</h2>
           </div>
           <div className="quick-link-row">
+            <TrackedLink className="ghost-link" eventLabel="Scenario Drafts" eventSource="owner-page" href="/scenario-drafts">
+              {isRu ? "Запросы сценариев" : "Scenario Drafts"}
+            </TrackedLink>
             <TrackedLink className="ghost-link" eventLabel="System Check" eventSource="owner-page" href="/test">
               {isRu ? "Системная проверка" : "System Check"}
             </TrackedLink>

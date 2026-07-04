@@ -284,6 +284,71 @@ select {
   font-size: 0.88rem;
 }
 
+.demo-discovery-panel,
+.demo-discovery-result {
+  display: grid;
+  gap: 18px;
+}
+
+.demo-discovery-form,
+.demo-discovery-group {
+  display: grid;
+  gap: 12px;
+}
+
+.demo-discovery-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.demo-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.demo-category-pill,
+.scenario-textarea {
+  border-radius: 18px;
+  border: 1px solid rgba(34, 32, 27, 0.12);
+  background: rgba(255, 252, 245, 0.88);
+  color: var(--ink);
+}
+
+.demo-category-pill {
+  min-height: 52px;
+  padding: 12px 14px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.demo-category-pill:hover,
+.demo-category-pill-active {
+  transform: translateY(-1px);
+  border-color: rgba(138, 109, 81, 0.38);
+  box-shadow: 0 14px 30px rgba(34, 32, 27, 0.1);
+}
+
+.demo-category-pill-active {
+  background: rgba(246, 235, 217, 0.95);
+}
+
+.scenario-textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 14px 16px;
+  resize: vertical;
+  font: inherit;
+  line-height: 1.6;
+}
+
 .hero-aside {
   display: grid;
   gap: 14px;

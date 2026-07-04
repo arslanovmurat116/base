@@ -162,7 +162,7 @@ export default async function HomePage() {
           <article className="panel plan-card">
             <p className="eyebrow">Free</p>
             <h3>{isRu ? "Первый запуск" : "First launch"}</h3>
-            <span className="plan-price">0 TON</span>
+            <span className="plan-price">{isRu ? "Бесплатно" : "Free"}</span>
             <p className="plan-note">
               {isRu ? "Демо, бот и основные экраны BOSE." : "Demo mode, the bot, and the main BOSE surfaces."}
             </p>
@@ -180,7 +180,9 @@ export default async function HomePage() {
             <h3>{isRu ? "Командный доступ" : "Team access"}</h3>
             <span className="plan-price">{isRu ? "Скоро" : "Soon"}</span>
             <p className="plan-note">
-              {isRu ? "Режим владельца, удержание и будущий TON-платёжный слой." : "Owner mode, retention, and the future TON payment layer."}
+              {isRu
+                ? "Режим владельца, удержание и расширенный доступ для команды."
+                : "Owner mode, retention, and expanded access for the team."}
             </p>
           </article>
         </div>

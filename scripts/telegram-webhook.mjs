@@ -84,6 +84,8 @@ async function main() {
         { command: "deals", description: "Open deals" },
         { command: "tasks", description: "Open tasks" },
         { command: "ai", description: "Open AI assistant" },
+        { command: "demo", description: "Describe what to automate" },
+        { command: "scenario", description: "Order a workflow scenario" },
         { command: "newclient", description: "Create client" },
         { command: "newdeal", description: "Create deal" },
         { command: "newtask", description: "Create task" },

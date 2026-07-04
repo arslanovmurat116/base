@@ -1,3 +1,4 @@
+import DemoScenarioDiscoveryForm from "../../components/demo-scenario-discovery-form";
 import TrackedLink from "../../components/tracked-link";
 import { getLanguage } from "../../lib/i18n-server";
 
@@ -13,15 +14,21 @@ export default async function DemoPage() {
     <main className="page-shell">
       <section className="page-heading">
         <p className="eyebrow">{isRu ? "Демо-режим" : "Demo Mode"}</p>
-        <h1>{isRu ? "Демо-режим без регистрации" : "Demo mode without registration"}</h1>
+        <h1>{isRu ? "Покажите BOSE ваш реальный процесс" : "Show BOSE your real workflow"}</h1>
         <p>
           {isRu
-            ? "Здесь можно быстро прокликать BOSE как тестовый пользователь: клиенты, сделки, задачи и AI."
-            : "This is the fast no-registration path: click through clients, deals, tasks, and AI."}
+            ? "Опишите, что именно вы хотите автоматизировать. BOSE сохранит запрос, соберёт черновик сценария и покажет, с чего можно начать."
+            : "Describe what you want to automate. BOSE will save the request, draft the scenario, and show the first step to automate."}
         </p>
       </section>
 
+      <DemoScenarioDiscoveryForm lang={lang} />
+
       <section className="panel">
+        <div className="section-title">
+          <p className="eyebrow">{isRu ? "Дополнительно" : "Also explore"}</p>
+          <h2>{isRu ? "Готовые поверхности BOSE" : "Ready BOSE surfaces"}</h2>
+        </div>
         <div className="quick-link-row">
           <TrackedLink className="primary-link" eventLabel="Open Workspace" eventSource="demo-page" href="/dashboard">
             {isRu ? "Открыть BOSE" : "Open workspace"}

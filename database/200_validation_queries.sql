@@ -50,6 +50,8 @@ select 'telegram_bot_requests', count(*) from telegram_bot_requests
 union all
 select 'telegram_retention_campaigns', count(*) from telegram_retention_campaigns
 union all
+select 'scenario_drafts', count(*) from scenario_drafts
+union all
 select 'daily_reports', count(*) from daily_reports;
 
 select id, full_name, source, channel, status, assigned_user_id, created_at
@@ -87,6 +89,17 @@ select
     count(*) filter (where last_seen_at < now() - interval '7 days' and last_seen_at >= now() - interval '30 days') as dormant_users,
     count(*) filter (where last_seen_at < now() - interval '30 days') as inactive_users
 from telegram_identities;
+
+select
+    id,
+    source,
+    category,
+    left(coalesce(ai_summary, raw_text), 120) as summary,
+    status,
+    created_at
+from scenario_drafts
+order by updated_at desc, created_at desc
+limit 20;
 
 select conversation_id, sender_type, direction, created_at, message_text
 from lead_messages

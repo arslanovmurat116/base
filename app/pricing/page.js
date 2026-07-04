@@ -5,7 +5,9 @@ export const metadata = {
   title: "Pricing | BOSE"
 };
 
-function PlanCard({ eyebrow, title, price, note, features, accent = false, actionLabel }) {
+const TELEGRAM_BOT_HREF = "https://t.me/bose_business_os_bot";
+
+function PlanCard({ eyebrow, title, price, note, features, accent = false, actionLabel, href }) {
   return (
     <article className={accent ? "panel plan-card plan-card-accent" : "panel plan-card"}>
       <p className="eyebrow">{eyebrow}</p>
@@ -24,7 +26,9 @@ function PlanCard({ eyebrow, title, price, note, features, accent = false, actio
           className={accent ? "primary-link" : "ghost-link"}
           eventLabel={title}
           eventSource="pricing-page"
-          href="/pricing#ton-payment-layer"
+          href={href}
+          rel={href.startsWith("https://") ? "noreferrer" : undefined}
+          target={href.startsWith("https://") ? "_blank" : undefined}
         >
           {actionLabel}
         </TrackedLink>
@@ -44,8 +48,8 @@ export default async function PricingPage() {
         <h1>{isRu ? "Тарифы" : "Pricing"}</h1>
         <p>
           {isRu
-            ? "Подписки ещё не подключены. Сейчас это чистая заготовка под будущий TON-платёжный слой: сначала testnet, потом smoke tests, потом mainnet."
-            : "Subscriptions are not live yet. This is a clean placeholder for the future TON payment layer: testnet first, then smoke tests, then mainnet."}
+            ? "Оплата внутри приложения появится позже. Сейчас доступ и подключение оформляются вручную через бота BOSE."
+            : "In-app payments will be added later. For now, access and setup are handled manually through the BOSE bot."}
         </p>
       </section>
 
@@ -53,63 +57,91 @@ export default async function PricingPage() {
         <PlanCard
           eyebrow="Free"
           title="Free"
-          price="0 TON"
+          price={isRu ? "Бесплатно" : "Free"}
           note={
             isRu
-              ? "Для первого знакомства с BOSE, Mini App и базовыми Telegram-сценариями."
-              : "For the first look at BOSE, the Mini App, and basic Telegram workflows."
+              ? "Для первого знакомства с BOSE, Mini App и базовыми сценариями."
+              : "For the first look at BOSE, the Mini App, and the basic workflows."
           }
-          features={[isRu ? "Mini App" : "Mini App", isRu ? "Базовый бот" : "Core bot", isRu ? "Демо-режим" : "Demo Mode"]}
-          actionLabel={isRu ? "Скоро" : "Coming soon"}
+          features={[
+            "Mini App",
+            isRu ? "Базовый бот" : "Core bot",
+            isRu ? "Демо-режим" : "Demo Mode"
+          ]}
+          actionLabel={isRu ? "Открыть BOSE" : "Open BOSE"}
+          href="/dashboard"
         />
         <PlanCard
           accent
           eyebrow="Pro"
           title="Pro"
-          price={isRu ? "Скоро" : "Soon"}
+          price={isRu ? "Позже" : "Later"}
           note={
             isRu
-              ? "Для небольших команд: клиенты, сделки, задачи, AI-сводка и основа удержания."
-              : "For small teams: clients, deals, tasks, AI summaries, and retention basics."
+              ? "Для небольших команд: клиенты, сделки, задачи, AI-сводки и рабочий контур в одном месте."
+              : "For small teams: clients, deals, tasks, AI summaries, and the operating loop in one place."
           }
-          features={[isRu ? "Клиенты и сделки" : "Clients and deals", isRu ? "AI-сводка" : "AI summary", isRu ? "Основа удержания" : "Retention foundation"]}
-          actionLabel={isRu ? "Оставить интерес" : "Join waitlist"}
+          features={[
+            isRu ? "Клиенты и сделки" : "Clients and deals",
+            isRu ? "AI-сводки" : "AI summaries",
+            isRu ? "Командная работа" : "Team workflows"
+          ]}
+          actionLabel={isRu ? "Написать в бота" : "Contact in bot"}
+          href={TELEGRAM_BOT_HREF}
         />
         <PlanCard
           eyebrow="Business"
           title="Business"
-          price={isRu ? "Скоро" : "Soon"}
+          price={isRu ? "Позже" : "Later"}
           note={
             isRu
-              ? "Для команд, которым нужен режим владельца, запусковые метрики и будущий платёжный слой."
-              : "For teams that need owner mode, launch metrics, and the future payment layer."}
-          features={[isRu ? "Режим владельца" : "Owner mode", isRu ? "Аналитика запуска" : "Launch analytics", isRu ? "Платёжный слой" : "Payment layer"]}
-          actionLabel={isRu ? "Смотреть план" : "View plan"}
+              ? "Для команд, которым нужен режим владельца, аналитика запуска и расширенный доступ."
+              : "For teams that need owner mode, launch analytics, and expanded access."
+          }
+          features={[
+            isRu ? "Режим владельца" : "Owner mode",
+            isRu ? "Аналитика запуска" : "Launch analytics",
+            isRu ? "Расширенный доступ" : "Expanded access"
+          ]}
+          actionLabel={isRu ? "Оставить интерес" : "Leave interest"}
+          href={TELEGRAM_BOT_HREF}
         />
       </section>
 
-      <section className="panel" id="ton-payment-layer">
+      <section className="panel" id="access-later">
         <div className="section-title">
-          <p className="eyebrow">TON Payment Layer</p>
-          <h2>{isRu ? "Что будет дальше" : "What comes next"}</h2>
+          <p className="eyebrow">{isRu ? "Позже" : "Later"}</p>
+          <h2>{isRu ? "Как это будет работать" : "How this will work"}</h2>
         </div>
         <div className="workboard-stack">
           <article className="work-item">
             <div>
-              <strong>{isRu ? "Этап 1" : "Stage 1"}</strong>
-              <p>{isRu ? "TON Testnet и smoke tests без реальных списаний." : "TON testnet and smoke tests without real charges."}</p>
+              <strong>{isRu ? "Сейчас" : "Now"}</strong>
+              <p>
+                {isRu
+                  ? "Ты можешь открыть BOSE, посмотреть демо и поработать через бота."
+                  : "You can open BOSE, explore the demo, and work through the bot."}
+              </p>
             </div>
           </article>
           <article className="work-item">
             <div>
-              <strong>{isRu ? "Этап 2" : "Stage 2"}</strong>
-              <p>{isRu ? "Проверка сценариев подписки и статусов доступа." : "Subscription flow and access status verification."}</p>
+              <strong>{isRu ? "Подключение" : "Setup"}</strong>
+              <p>
+                {isRu
+                  ? "Если нужен доступ для команды, пока подключаем вручную через бота."
+                  : "If you need team access, we handle setup manually through the bot for now."}
+              </p>
             </div>
           </article>
           <article className="work-item">
             <div>
-              <strong>{isRu ? "Этап 3" : "Stage 3"}</strong>
-              <p>{isRu ? "Mainnet после реальных пользователей и подтверждённого сценария оплаты." : "Mainnet only after real users and a validated payment path."}</p>
+              <strong>{isRu ? "Дальше" : "Next"}</strong>
+              <p>
+                {isRu
+                  ? "Оплата внутри приложения появится позже, когда мы подключим её в продукт."
+                  : "In-app payments will appear later, once they are enabled in the product."}
+              </p>
             </div>
           </article>
         </div>
