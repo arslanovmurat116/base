@@ -5,22 +5,61 @@ import os from "node:os";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { evaluateSystemHealth } from "../lib/system-health-core.mjs";
+import { getEnvironmentPublicSummary } from "../lib/env.js";
+import {
+  createInternalSystemHealth,
+  evaluateSystemHealth,
+  getSystemHealthHttpStatus
+} from "../lib/system-health-core.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
 const startDevScript = path.join(repoRoot, "start-dev.ps1");
-const checkSystemScript = path.join(repoRoot, "scripts", "check-system.mjs");
 const checkLaunchConfigScript = path.join(repoRoot, "scripts", "check-launch-config.mjs");
+const checkSystemScript = path.join(repoRoot, "scripts", "check-system.mjs");
 
-function makeTempDir(prefix) {
-  return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+const RUNTIME_ENV_KEYS = [
+  "DISET_DEFAULT_COMPANY_ID",
+  "APP_BASE_URL",
+  "POSTGRES_HOST",
+  "POSTGRES_PORT",
+  "POSTGRES_DATABASE",
+  "POSTGRES_USER",
+  "POSTGRES_PASSWORD",
+  "POSTGRES_SSL",
+  "TELEGRAM_BOT_TOKEN",
+  "TELEGRAM_BOT_SECRET_TOKEN",
+  "CRON_SECRET"
+];
+
+function createTempProject(prefix, envLocalContent = null) {
+  const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  fs.writeFileSync(path.join(projectDir, ".env.example"), "# template\n", "utf8");
+
+  if (envLocalContent !== null) {
+    fs.writeFileSync(path.join(projectDir, ".env.local"), envLocalContent, "utf8");
+  }
+
+  return projectDir;
 }
 
-function writeFile(filePath, contents) {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, contents, "utf8");
+function buildChildEnv(overrides = {}) {
+  const env = { ...process.env };
+
+  for (const key of RUNTIME_ENV_KEYS) {
+    delete env[key];
+  }
+
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value == null) {
+      delete env[key];
+    } else {
+      env[key] = value;
+    }
+  }
+
+  return env;
 }
 
 function runNode(argumentsList, options = {}) {
@@ -73,64 +112,74 @@ function collectOutput(result) {
   return `${result.stdout || ""}\n${result.stderr || ""}`;
 }
 
-function createHealthPayload({
-  status,
-  mode,
-  ready,
-  warnings = [],
-  database = {},
-  telegram = {}
-}) {
-  return {
-    status,
-    mode,
-    ready,
-    database: {
-      configured: Boolean(database.configured),
-      ok: Boolean(database.ok),
-      mode: database.mode || mode,
-      message: database.message || "diagnostic",
-      checkedAt: database.checkedAt || new Date().toISOString()
-    },
-    telegram: {
-      configured: Boolean(telegram.configured),
-      botReady: Boolean(telegram.botReady),
-      appUrlReady: Boolean(telegram.appUrlReady),
-      analyticsEnabled: Boolean(telegram.analyticsEnabled),
-      launchMetricsEnabled: Boolean(telegram.launchMetricsEnabled)
-    },
-    warnings,
-    timestamp: new Date().toISOString()
-  };
-}
+async function withEnv(overrides, callback) {
+  const previousValues = new Map();
 
-async function withServer(handler, callback) {
-  const server = http.createServer(handler);
-
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-
-  const address = server.address();
-  const baseUrl = `http://127.0.0.1:${address.port}`;
+  for (const key of RUNTIME_ENV_KEYS) {
+    previousValues.set(key, process.env[key]);
+    if (Object.prototype.hasOwnProperty.call(overrides, key)) {
+      const value = overrides[key];
+      if (value == null) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    } else {
+      delete process.env[key];
+    }
+  }
 
   try {
-    return await callback(baseUrl);
+    return await callback();
   } finally {
-    await new Promise((resolve, reject) =>
-      server.close((error) => (error ? reject(error) : resolve()))
-    );
+    for (const key of RUNTIME_ENV_KEYS) {
+      const previous = previousValues.get(key);
+      if (previous == null) {
+        delete process.env[key];
+      } else {
+        process.env[key] = previous;
+      }
+    }
   }
 }
 
-function createRouteHandler(healthResponse, healthStatusCode = 200) {
-  const healthBody =
-    typeof healthResponse === "string"
-      ? healthResponse
-      : JSON.stringify(healthResponse);
+function createLiveEnv(overrides = {}) {
+  return {
+    DISET_DEFAULT_COMPANY_ID: "company_demo",
+    APP_BASE_URL: "https://bose.example.com",
+    POSTGRES_HOST: "localhost",
+    POSTGRES_DATABASE: "bose",
+    POSTGRES_USER: "user",
+    POSTGRES_PASSWORD: "secret",
+    TELEGRAM_BOT_TOKEN: "telegram-secret-token",
+    ...overrides
+  };
+}
 
-  const handler = (request, response) => {
+async function createRealHealth(envOverrides, databaseStatus) {
+  return withEnv(envOverrides, async () => {
+    const env = getEnvironmentPublicSummary();
+    const appBaseUrl = String(process.env.APP_BASE_URL || "").trim();
+
+    return evaluateSystemHealth({
+      env,
+      database: databaseStatus,
+      telegram: {
+        configured: Boolean(String(process.env.TELEGRAM_BOT_TOKEN || "").trim()),
+        appUrlReady: /^https:\/\//i.test(appBaseUrl),
+        analyticsEnabled: Boolean(
+          String(process.env.DISET_DEFAULT_COMPANY_ID || "").trim() && env.database.liveReady
+        )
+      }
+    });
+  });
+}
+
+async function withHealthServer(statusCode, body, callback) {
+  const server = http.createServer((request, response) => {
     if (request.url === "/api/system/health") {
-      response.writeHead(healthStatusCode, { "Content-Type": "application/json" });
-      response.end(healthBody);
+      response.writeHead(statusCode, { "Content-Type": "application/json" });
+      response.end(JSON.stringify(body));
       return;
     }
 
@@ -152,36 +201,163 @@ function createRouteHandler(healthResponse, healthStatusCode = 200) {
 
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
     response.end("not found");
-  };
-  return handler;
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  const baseUrl = `http://127.0.0.1:${address.port}`;
+
+  try {
+    return await callback(baseUrl);
+  } finally {
+    await new Promise((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve()))
+    );
+  }
 }
 
 async function testStartDevMissingLocalEnv() {
-  const tempDir = makeTempDir("BOSE Диагностика ");
-  const tempScript = path.join(tempDir, "start-dev.ps1");
-  const envExamplePath = path.join(tempDir, ".env.example");
-  const envLocalPath = path.join(tempDir, ".env.local");
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "BOSE-start-dev-"));
+  fs.copyFileSync(startDevScript, path.join(tempDir, "start-dev.ps1"));
+  fs.writeFileSync(path.join(tempDir, ".env.example"), "APP_BASE_URL=https://example.com\n");
 
-  fs.copyFileSync(startDevScript, tempScript);
-  writeFile(envExamplePath, "APP_BASE_URL=https://example.com\n");
-
-  const result = runPowerShell(["-File", tempScript], { cwd: tempDir });
+  const result = runPowerShell(["-File", path.join(tempDir, "start-dev.ps1")], {
+    cwd: tempDir
+  });
   const output = collectOutput(result);
 
-  assert.notEqual(result.status, 0, "start-dev.ps1 should fail without .env.local");
+  assert.notEqual(result.status, 0);
   assert.match(output, /Missing local environment file:/);
   assert.match(output, /Copy-Item -LiteralPath/);
-  assert.equal(fs.existsSync(envLocalPath), false, ".env.local must not be auto-created");
+  assert.equal(fs.existsSync(path.join(tempDir, ".env.local")), false);
 }
 
-async function testLaunchConfigReady() {
-  const tempDir = makeTempDir("BOSE Config Ready ");
-  const envExamplePath = path.join(tempDir, ".env.example");
-  const envLocalPath = path.join(tempDir, ".env.local");
+async function testLiveDbWithoutPort() {
+  const health = await createRealHealth(createLiveEnv({ POSTGRES_PORT: null }), {
+    ok: true,
+    mode: "live",
+    message: "Database connection is healthy",
+    timestamp: new Date().toISOString()
+  });
 
-  writeFile(envExamplePath, "# template\n");
-  writeFile(
-    envLocalPath,
+  assert.equal(health.mode, "live");
+  assert.equal(health.ready, true);
+}
+
+async function testLiveDbWithoutSsl() {
+  const health = await createRealHealth(createLiveEnv({ POSTGRES_SSL: null }), {
+    ok: true,
+    mode: "live",
+    message: "Database connection is healthy",
+    timestamp: new Date().toISOString()
+  });
+
+  assert.equal(health.mode, "live");
+  assert.equal(health.ready, true);
+}
+
+async function testMockFallbackClassification() {
+  const health = await createRealHealth(
+    {
+      DISET_DEFAULT_COMPANY_ID: "company_demo",
+      APP_BASE_URL: "https://bose.example.com",
+      TELEGRAM_BOT_TOKEN: "telegram-secret-token"
+    },
+    {
+      ok: false,
+      mode: "mock",
+      message: "Missing environment variables for the live database"
+    }
+  );
+
+  assert.equal(health.mode, "mock");
+  assert.equal(health.ok, true);
+  assert.equal(health.ready, false);
+}
+
+async function testPartialDbConfigIsMisconfigured() {
+  const health = await createRealHealth(
+    {
+      DISET_DEFAULT_COMPANY_ID: "company_demo",
+      APP_BASE_URL: "https://bose.example.com",
+      POSTGRES_HOST: "localhost",
+      TELEGRAM_BOT_TOKEN: "telegram-secret-token"
+    },
+    {
+      ok: false,
+      mode: "mock",
+      message: "Missing environment variables for the live database"
+    }
+  );
+
+  assert.equal(health.mode, "misconfigured");
+  assert.equal(health.ok, false);
+  assert.equal(health.ready, false);
+}
+
+async function testDatabaseRuntimeFailureIsDegraded() {
+  const health = await createRealHealth(createLiveEnv(), {
+    ok: false,
+    mode: "degraded",
+    message: "Database health check failed: connect timeout"
+  });
+
+  assert.equal(health.mode, "degraded");
+  assert.equal(health.ok, false);
+  assert.equal(health.ready, false);
+}
+
+async function testMissingTelegramPrerequisitesIsNotReady() {
+  const health = await createRealHealth(
+    createLiveEnv({
+      TELEGRAM_BOT_TOKEN: null
+    }),
+    {
+      ok: true,
+      mode: "live",
+      message: "Database connection is healthy",
+      timestamp: new Date().toISOString()
+    }
+  );
+
+  assert.equal(health.mode, "degraded");
+  assert.equal(health.ok, true);
+  assert.equal(health.ready, false);
+}
+
+async function testConfigFromProcessEnvOnly() {
+  const projectDir = createTempProject("BOSE-config-process-");
+  const result = runNode([checkLaunchConfigScript, "--project-dir", projectDir], {
+    env: buildChildEnv(createLiveEnv())
+  });
+
+  assert.equal(result.status, 0, collectOutput(result));
+  assert.match(collectOutput(result), /CONFIG_OK/);
+}
+
+async function testQuotedDotenvValues() {
+  const projectDir = createTempProject(
+    "BOSE-config-quoted-",
+    [
+      "DISET_DEFAULT_COMPANY_ID=company_demo",
+      "APP_BASE_URL=\"https://bose.example.com\"",
+      "POSTGRES_HOST=localhost",
+      "POSTGRES_DATABASE=bose",
+      "POSTGRES_USER=user",
+      "POSTGRES_PASSWORD=secret",
+      "TELEGRAM_BOT_TOKEN='telegram-secret-token'"
+    ].join("\n")
+  );
+  const result = runNode([checkLaunchConfigScript, "--project-dir", projectDir], {
+    env: buildChildEnv()
+  });
+
+  assert.equal(result.status, 0, collectOutput(result));
+}
+
+async function testLocalFallbackDotenv() {
+  const projectDir = createTempProject(
+    "BOSE-config-local-",
     [
       "DISET_DEFAULT_COMPANY_ID=company_demo",
       "APP_BASE_URL=https://bose.example.com",
@@ -189,170 +365,118 @@ async function testLaunchConfigReady() {
       "POSTGRES_DATABASE=bose",
       "POSTGRES_USER=user",
       "POSTGRES_PASSWORD=secret",
-      "TELEGRAM_BOT_TOKEN=test-token"
+      "TELEGRAM_BOT_TOKEN=telegram-secret-token"
     ].join("\n")
   );
-
-  const result = runNode([
-    checkLaunchConfigScript,
-    "--env-example",
-    envExamplePath,
-    "--env-local",
-    envLocalPath
-  ]);
-
-  assert.equal(result.status, 0, collectOutput(result));
-  assert.match(collectOutput(result), /CONFIG_OK/);
-}
-
-async function testHealthCoreMissingRequiredEnv() {
-  const health = evaluateSystemHealth({
-    env: {
-      ok: false,
-      requiredMissing: ["APP_BASE_URL"],
-      database: { liveReady: false, configured: 0, total: 6 },
-      telegram: { botReady: false }
-    },
-    database: { ok: false, mode: "mock", message: "Missing database env" },
-    telegram: { configured: false },
-    analytics: { enabled: false, appUrlReady: false },
-    launchMetrics: { enabled: false }
+  const result = runNode([checkLaunchConfigScript, "--project-dir", projectDir], {
+    env: buildChildEnv()
   });
 
-  assert.equal(health.mode, "misconfigured");
-  assert.equal(health.ready, false);
-  assert.equal(health.status, "error");
+  assert.equal(result.status, 0, collectOutput(result));
 }
 
-async function testLaunchConfigMissingRequiredEnv() {
-  const tempDir = makeTempDir("BOSE Config Missing ");
-  const envExamplePath = path.join(tempDir, ".env.example");
-  const envLocalPath = path.join(tempDir, ".env.local");
+async function testMissingLocalEnvButProcessEnvFull() {
+  const projectDir = createTempProject("BOSE-config-no-local-");
+  const result = runNode([checkLaunchConfigScript, "--project-dir", projectDir], {
+    env: buildChildEnv(createLiveEnv())
+  });
 
-  writeFile(envExamplePath, "# template\n");
-  writeFile(
-    envLocalPath,
-    [
-      "DISET_DEFAULT_COMPANY_ID=company_demo",
-      "POSTGRES_HOST=localhost",
-      "POSTGRES_DATABASE=bose",
-      "POSTGRES_USER=user",
-      "POSTGRES_PASSWORD=secret",
-      "TELEGRAM_BOT_TOKEN=test-token"
-    ].join("\n")
-  );
+  assert.equal(result.status, 0, collectOutput(result));
+}
 
-  const result = runNode([
-    checkLaunchConfigScript,
-    "--env-example",
-    envExamplePath,
-    "--env-local",
-    envLocalPath
-  ]);
+async function testMissingRequiredConfigFails() {
+  const projectDir = createTempProject("BOSE-config-missing-");
+  const result = runNode([checkLaunchConfigScript, "--project-dir", projectDir], {
+    env: buildChildEnv({
+      DISET_DEFAULT_COMPANY_ID: "company_demo"
+    })
+  });
 
-  assert.notEqual(result.status, 0, "missing APP_BASE_URL must fail");
+  assert.notEqual(result.status, 0);
   assert.match(collectOutput(result), /Missing required core variables/);
 }
 
-async function testHealthCoreMockMode() {
-  const health = evaluateSystemHealth({
-    env: {
-      ok: true,
-      requiredMissing: [],
-      database: { liveReady: false, configured: 0, total: 6 },
-      telegram: { botReady: false }
-    },
-    database: { ok: false, mode: "mock", message: "Using fallback" },
-    telegram: { configured: false },
-    analytics: { enabled: false, appUrlReady: false },
-    launchMetrics: { enabled: false }
+async function testSecretsAreNotPrinted() {
+  const projectDir = createTempProject("BOSE-config-secret-");
+  const secretToken = "super-secret-telegram-token";
+  const result = runNode([checkLaunchConfigScript, "--project-dir", projectDir], {
+    env: buildChildEnv({
+      DISET_DEFAULT_COMPANY_ID: "company_demo",
+      APP_BASE_URL: "https://bose.example.com",
+      TELEGRAM_BOT_TOKEN: secretToken
+    })
   });
 
-  assert.equal(health.mode, "mock");
-  assert.equal(health.ready, false);
-  assert.equal(health.status, "warn");
-  assert.match(health.warnings.join("\n"), /mock\/fallback mode/i);
+  const output = collectOutput(result);
+  assert.notEqual(result.status, 0);
+  assert.doesNotMatch(output, new RegExp(secretToken.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 }
 
-async function testHealthCoreLiveReadyMode() {
-  const health = evaluateSystemHealth({
-    env: {
-      ok: true,
-      requiredMissing: [],
-      database: { liveReady: true, configured: 6, total: 6 },
-      telegram: { botReady: true }
-    },
-    database: {
-      ok: true,
-      mode: "live",
-      message: "Database connection is healthy",
-      timestamp: new Date().toISOString()
-    },
-    telegram: { configured: true },
-    analytics: { enabled: true, appUrlReady: true },
-    launchMetrics: { enabled: true }
-  });
-
-  assert.equal(health.mode, "live");
-  assert.equal(health.ready, true);
-  assert.equal(health.status, "ok");
-}
-
-async function testRuntimeGateMockModeFails() {
-  const payload = createHealthPayload({
-    status: "warn",
-    mode: "mock",
-    ready: false,
-    warnings: ["Mock mode is active."]
-  });
-
-  await withServer(createRouteHandler(payload), async (baseUrl) => {
-    const result = await runNodeAsync([
-      checkSystemScript,
-      "--base-url",
-      baseUrl,
-      "--timeout-ms",
-      "1200",
-      "--require-ready"
-    ]);
-
-    assert.notEqual(result.status, 0, "mock mode must fail release gate");
-    assert.match(collectOutput(result), /Release gate failed/);
-  });
-}
-
-async function testRuntimeGateLiveModePasses() {
-  const payload = createHealthPayload({
-    status: "ok",
+async function testHttpContractLiveReady() {
+  const health = await createRealHealth(createLiveEnv(), {
+    ok: true,
     mode: "live",
-    ready: true,
-    warnings: [],
-    database: { configured: true, ok: true, mode: "live" },
-    telegram: {
-      configured: true,
-      botReady: true,
-      appUrlReady: true,
-      analyticsEnabled: true,
-      launchMetricsEnabled: true
-    }
+    message: "Database connection is healthy",
+    timestamp: new Date().toISOString()
   });
 
-  await withServer(createRouteHandler(payload), async (baseUrl) => {
-    const result = await runNodeAsync([
-      checkSystemScript,
-      "--base-url",
-      baseUrl,
-      "--timeout-ms",
-      "1200",
-      "--require-ready"
-    ]);
-
-    assert.equal(result.status, 0, collectOutput(result));
-    assert.match(collectOutput(result), /SYSTEM_READY_OK/);
-  });
+  assert.equal(getSystemHealthHttpStatus(health), 200);
 }
 
-async function testRuntimeUnavailableFailsClearly() {
+async function testHttpContractMock() {
+  const health = await createRealHealth(
+    {
+      DISET_DEFAULT_COMPANY_ID: "company_demo",
+      APP_BASE_URL: "https://bose.example.com",
+      TELEGRAM_BOT_TOKEN: "telegram-secret-token"
+    },
+    {
+      ok: false,
+      mode: "mock",
+      message: "Missing environment variables for the live database"
+    }
+  );
+
+  assert.equal(getSystemHealthHttpStatus(health), 503);
+}
+
+async function testHttpContractDegraded() {
+  const health = await createRealHealth(createLiveEnv(), {
+    ok: false,
+    mode: "degraded",
+    message: "Database health check failed: connect timeout"
+  });
+
+  assert.equal(getSystemHealthHttpStatus(health), 503);
+}
+
+async function testHttpContractMisconfigured() {
+  const health = await createRealHealth(
+    {
+      DISET_DEFAULT_COMPANY_ID: "company_demo",
+      APP_BASE_URL: "https://bose.example.com",
+      POSTGRES_HOST: "localhost",
+      TELEGRAM_BOT_TOKEN: "telegram-secret-token"
+    },
+    {
+      ok: false,
+      mode: "mock",
+      message: "Missing environment variables for the live database"
+    }
+  );
+
+  assert.equal(getSystemHealthHttpStatus(health), 503);
+}
+
+async function testHttpContractInternalError() {
+  const health = createInternalSystemHealth();
+
+  assert.equal(health.mode, "degraded");
+  assert.equal(health.ok, false);
+  assert.equal(health.ready, false);
+}
+
+async function testRuntimeUnavailableFails() {
   const probeServer = http.createServer((request, response) => {
     response.writeHead(200);
     response.end("unused");
@@ -365,47 +489,149 @@ async function testRuntimeUnavailableFailsClearly() {
   );
 
   const baseUrl = `http://127.0.0.1:${address.port}`;
-  const result = runNode([
-    checkSystemScript,
-    "--base-url",
-    baseUrl,
-    "--timeout-ms",
-    "200",
-    "--require-ready"
-  ]);
+  const result = runNode([checkSystemScript, "--require-ready", "--base-url", baseUrl, "--timeout-ms", "200"]);
 
-  assert.notEqual(result.status, 0, "runtime outage must fail");
+  assert.notEqual(result.status, 0);
   assert.match(collectOutput(result), /Runtime is unavailable/);
-  assert.match(collectOutput(result), /npm run dev/);
 }
 
 async function testMalformedHealthJsonFails() {
-  await withServer(createRouteHandler("{not-json}", 200), async (baseUrl) => {
+  const server = http.createServer((request, response) => {
+    response.writeHead(200, { "Content-Type": "application/json" });
+    response.end("{not-json}");
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  const baseUrl = `http://127.0.0.1:${address.port}`;
+
+  try {
     const result = await runNodeAsync([
       checkSystemScript,
+      "--require-ready",
       "--base-url",
       baseUrl,
       "--timeout-ms",
-      "1200",
-      "--require-ready"
+      "1200"
     ]);
 
-    assert.notEqual(result.status, 0, "malformed JSON must fail");
+    assert.notEqual(result.status, 0);
     assert.match(collectOutput(result), /Malformed JSON/);
+  } finally {
+    await new Promise((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve()))
+    );
+  }
+}
+
+async function testRuntimeFailsOnHttp503Json() {
+  const health = await createRealHealth(
+    {
+      DISET_DEFAULT_COMPANY_ID: "company_demo",
+      APP_BASE_URL: "https://bose.example.com",
+      TELEGRAM_BOT_TOKEN: "telegram-secret-token"
+    },
+    {
+      ok: false,
+      mode: "mock",
+      message: "Missing environment variables for the live database"
+    }
+  );
+
+  await withHealthServer(503, health, async (baseUrl) => {
+    const result = await runNodeAsync([
+      checkSystemScript,
+      "--require-ready",
+      "--base-url",
+      baseUrl,
+      "--timeout-ms",
+      "1200"
+    ]);
+
+    assert.notEqual(result.status, 0);
+    assert.match(collectOutput(result), /Health is not ready/);
+    assert.match(collectOutput(result), /mode=mock/);
+  });
+}
+
+async function testRuntimeFailsOnHttp200ReadyFalse() {
+  const health = await createRealHealth(createLiveEnv(), {
+    ok: true,
+    mode: "live",
+    message: "Database connection is healthy",
+    timestamp: new Date().toISOString()
+  });
+  const tamperedHealth = { ...health, status: "warn", ready: false };
+
+  await withHealthServer(200, tamperedHealth, async (baseUrl) => {
+    const result = await runNodeAsync([
+      checkSystemScript,
+      "--require-ready",
+      "--base-url",
+      baseUrl,
+      "--timeout-ms",
+      "1200"
+    ]);
+
+    assert.notEqual(result.status, 0);
+    assert.match(collectOutput(result), /ready=false/);
+  });
+}
+
+async function testRuntimeFailsOnHttp200ModeMock() {
+  const health = await createRealHealth(createLiveEnv(), {
+    ok: true,
+    mode: "live",
+    message: "Database connection is healthy",
+    timestamp: new Date().toISOString()
+  });
+  const tamperedHealth = {
+    ...health,
+    status: "warn",
+    mode: "mock",
+    ready: false,
+    warnings: ["Mock mode is active."]
+  };
+
+  await withHealthServer(200, tamperedHealth, async (baseUrl) => {
+    const result = await runNodeAsync([
+      checkSystemScript,
+      "--require-ready",
+      "--base-url",
+      baseUrl,
+      "--timeout-ms",
+      "1200"
+    ]);
+
+    assert.notEqual(result.status, 0);
+    assert.match(collectOutput(result), /mode=mock/);
   });
 }
 
 const tests = [
   { name: "start-dev missing .env.local", fn: testStartDevMissingLocalEnv },
-  { name: "launch config ready", fn: testLaunchConfigReady },
-  { name: "health core missing required env", fn: testHealthCoreMissingRequiredEnv },
-  { name: "launch config missing required env", fn: testLaunchConfigMissingRequiredEnv },
-  { name: "health core mock mode", fn: testHealthCoreMockMode },
-  { name: "health core live ready mode", fn: testHealthCoreLiveReadyMode },
-  { name: "runtime gate fails in mock mode", fn: testRuntimeGateMockModeFails },
-  { name: "runtime gate passes in live mode", fn: testRuntimeGateLiveModePasses },
-  { name: "runtime gate fails when app is down", fn: testRuntimeUnavailableFailsClearly },
-  { name: "runtime gate fails on malformed health JSON", fn: testMalformedHealthJsonFails }
+  { name: "live DB without POSTGRES_PORT", fn: testLiveDbWithoutPort },
+  { name: "live DB without POSTGRES_SSL", fn: testLiveDbWithoutSsl },
+  { name: "mock fallback classification", fn: testMockFallbackClassification },
+  { name: "partial DB config is misconfigured", fn: testPartialDbConfigIsMisconfigured },
+  { name: "DB runtime failure is degraded", fn: testDatabaseRuntimeFailureIsDegraded },
+  { name: "missing Telegram prerequisites is not ready", fn: testMissingTelegramPrerequisitesIsNotReady },
+  { name: "config from process.env only", fn: testConfigFromProcessEnvOnly },
+  { name: "quoted dotenv values", fn: testQuotedDotenvValues },
+  { name: "local fallback dotenv", fn: testLocalFallbackDotenv },
+  { name: "missing .env.local but process.env full", fn: testMissingLocalEnvButProcessEnvFull },
+  { name: "missing required config fails", fn: testMissingRequiredConfigFails },
+  { name: "secrets are not printed", fn: testSecretsAreNotPrinted },
+  { name: "HTTP contract live ready", fn: testHttpContractLiveReady },
+  { name: "HTTP contract mock", fn: testHttpContractMock },
+  { name: "HTTP contract degraded", fn: testHttpContractDegraded },
+  { name: "HTTP contract misconfigured", fn: testHttpContractMisconfigured },
+  { name: "HTTP contract internal error", fn: testHttpContractInternalError },
+  { name: "runtime unavailable fails", fn: testRuntimeUnavailableFails },
+  { name: "malformed health JSON fails", fn: testMalformedHealthJsonFails },
+  { name: "runtime fails on HTTP 503 JSON", fn: testRuntimeFailsOnHttp503Json },
+  { name: "runtime fails on HTTP 200 ready false", fn: testRuntimeFailsOnHttp200ReadyFalse },
+  { name: "runtime fails on HTTP 200 mode mock", fn: testRuntimeFailsOnHttp200ModeMock }
 ];
 
 async function main() {

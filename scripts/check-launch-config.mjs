@@ -1,22 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import nextEnv from "@next/env";
+import { getDatabaseConfigState } from "../lib/db.js";
+import { getEnvironmentPublicSummary } from "../lib/env.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
-
-const DEFAULT_ENV_EXAMPLE = path.join(repoRoot, ".env.example");
-const DEFAULT_ENV_LOCAL = path.join(repoRoot, ".env.local");
-
-const REQUIRED_CORE_KEYS = ["DISET_DEFAULT_COMPANY_ID", "APP_BASE_URL"];
-const REQUIRED_DATABASE_KEYS = [
-  "POSTGRES_HOST",
-  "POSTGRES_DATABASE",
-  "POSTGRES_USER",
-  "POSTGRES_PASSWORD"
-];
-const REQUIRED_TELEGRAM_KEYS = ["TELEGRAM_BOT_TOKEN"];
+const { loadEnvConfig } = nextEnv;
 
 function parseArgs(argv) {
   const options = new Map();
@@ -47,93 +39,84 @@ function parseArgs(argv) {
   return options;
 }
 
-function readEnvFile(filePath) {
-  const content = fs.readFileSync(filePath, "utf8");
+function normalizeText(value) {
+  const trimmed = String(value || "").trim();
 
-  return Object.fromEntries(
-    content
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .filter((line) => !line.startsWith("#"))
-      .map((line) => {
-        const index = line.indexOf("=");
-        if (index === -1) {
-          return [line, ""];
-        }
+  if (
+    trimmed.length >= 2 &&
+    ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'")))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
 
-        return [line.slice(0, index).trim(), line.slice(index + 1).trim()];
-      })
-  );
-}
-
-function collectMissing(env, keys) {
-  return keys.filter((key) => !env[key]);
+  return trimmed;
 }
 
 function isHttpsUrl(value) {
-  return typeof value === "string" && /^https:\/\//i.test(value.trim());
+  return /^https:\/\//i.test(normalizeText(value));
 }
 
-function printCreateEnvHint(envExamplePath, envLocalPath) {
+function printCreateEnvHint(projectDir) {
+  const envExamplePath = path.join(projectDir, ".env.example");
+  const envLocalPath = path.join(projectDir, ".env.local");
+
+  if (!fs.existsSync(envExamplePath)) {
+    return;
+  }
+
   console.error("Create the local environment file first:");
   console.error(
     `  Copy-Item -LiteralPath "${envExamplePath}" -Destination "${envLocalPath}"`
   );
 }
 
-function fail(message) {
+function fail(message, projectDir) {
   console.error(`CONFIG_ERR ${message}`);
+
+  if (projectDir) {
+    printCreateEnvHint(projectDir);
+  }
+
   process.exitCode = 1;
 }
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const envExamplePath = path.resolve(
-    options.get("--env-example") || DEFAULT_ENV_EXAMPLE
-  );
-  const envLocalPath = path.resolve(options.get("--env-local") || DEFAULT_ENV_LOCAL);
+  const projectDir = path.resolve(options.get("--project-dir") || repoRoot);
 
-  if (!fs.existsSync(envExamplePath)) {
-    fail(`Missing environment template: ${envExamplePath}`);
+  loadEnvConfig(projectDir);
+
+  const env = getEnvironmentPublicSummary();
+  const databaseState = getDatabaseConfigState();
+  const appBaseUrl = normalizeText(process.env.APP_BASE_URL);
+
+  if (!env.ok) {
+    fail(`Missing required core variables: ${env.requiredMissing.join(", ")}`, projectDir);
     return;
   }
 
-  if (!fs.existsSync(envLocalPath)) {
-    fail(`Missing local environment file: ${envLocalPath}`);
-    printCreateEnvHint(envExamplePath, envLocalPath);
+  if (!isHttpsUrl(appBaseUrl)) {
+    fail("APP_BASE_URL must be a public https URL for release checks.", projectDir);
     return;
   }
 
-  const env = readEnvFile(envLocalPath);
-  const missingCore = collectMissing(env, REQUIRED_CORE_KEYS);
-  const missingDatabase = collectMissing(env, REQUIRED_DATABASE_KEYS);
-  const missingTelegram = collectMissing(env, REQUIRED_TELEGRAM_KEYS);
-
-  if (missingCore.length > 0) {
-    fail(`Missing required core variables: ${missingCore.join(", ")}`);
+  if (!databaseState.hasRequiredConfig) {
+    fail(
+      `Missing live database variables: ${databaseState.requiredMissing.join(", ")}`,
+      projectDir
+    );
     return;
   }
 
-  if (!isHttpsUrl(env.APP_BASE_URL)) {
-    fail("APP_BASE_URL must be a public https URL for release checks.");
-    return;
-  }
-
-  if (missingDatabase.length > 0) {
-    fail(`Missing live database variables: ${missingDatabase.join(", ")}`);
-    return;
-  }
-
-  if (missingTelegram.length > 0) {
-    fail(`Missing Telegram variables: ${missingTelegram.join(", ")}`);
+  if (!normalizeText(process.env.TELEGRAM_BOT_TOKEN)) {
+    fail("Missing Telegram variables: TELEGRAM_BOT_TOKEN", projectDir);
     return;
   }
 
   console.log("CONFIG_OK Release configuration is present.");
-  console.log(`CONFIG_ENV ${path.basename(envLocalPath)}`);
 }
 
 main().catch((error) => {
-  fail(error.message);
+  fail(error instanceof Error ? error.message : "Unknown configuration error");
 });

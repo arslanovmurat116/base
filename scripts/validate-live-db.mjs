@@ -1,52 +1,37 @@
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Pool } from "pg";
+import nextEnv from "@next/env";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
 const envPath = path.join(repoRoot, ".env.local");
+const { loadEnvConfig } = nextEnv;
 
-function readEnvFile(filePath) {
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`Не найден env файл: ${filePath}`);
+function requireEnv(key) {
+  const value = String(process.env[key] || "").trim();
+
+  if (!value) {
+    throw new Error(`Не задана переменная ${key} в process.env или ${envPath}`);
   }
 
-  return Object.fromEntries(
-    fs
-      .readFileSync(filePath, "utf8")
-      .split(/\r?\n/)
-      .filter(Boolean)
-      .filter((line) => !line.startsWith("#"))
-      .map((line) => {
-        const index = line.indexOf("=");
-        return [line.slice(0, index), line.slice(index + 1)];
-      })
-  );
+  return value;
 }
 
-function requireEnv(env, key) {
-  if (!env[key]) {
-    throw new Error(`Не задана переменная ${key} в ${envPath}`);
-  }
-}
-
-const env = readEnvFile(envPath);
-requireEnv(env, "POSTGRES_HOST");
-requireEnv(env, "POSTGRES_DATABASE");
-requireEnv(env, "POSTGRES_USER");
-requireEnv(env, "POSTGRES_PASSWORD");
-
+loadEnvConfig(repoRoot);
+const host = requireEnv("POSTGRES_HOST");
+const databaseName = requireEnv("POSTGRES_DATABASE");
+const user = requireEnv("POSTGRES_USER");
+const password = requireEnv("POSTGRES_PASSWORD");
 const pool = new Pool({
-  host: env.POSTGRES_HOST,
-  port: Number(env.POSTGRES_PORT || 5432),
-  database: env.POSTGRES_DATABASE,
-  user: env.POSTGRES_USER,
-  password: env.POSTGRES_PASSWORD,
-  ssl: env.POSTGRES_SSL === "true" ? { rejectUnauthorized: false } : false
+  host,
+  port: Number(process.env.POSTGRES_PORT || 5432),
+  database: databaseName,
+  user,
+  password,
+  ssl: process.env.POSTGRES_SSL === "true" ? { rejectUnauthorized: false } : false
 });
-
 async function printTable(title, text, params = []) {
   const result = await pool.query(text, params);
   console.log(`\n${title}`);

@@ -79,25 +79,35 @@ If `.env.local` is missing, it stops with a clear error and prints the exact `Co
 npm run check:system
 ```
 
-For a strict runtime gate against `/api/system/health`:
+`check:launch-config` reads configuration in this order:
+
+1. already injected `process.env`
+2. `.env.local` loaded via the standard Next env loader as a local fallback
+
+`.env.example` is a template only, not a live configuration source.
+
+Static release gate:
 
 ```powershell
-npm run check:system:ready
+npm run check:rc:static
 ```
 
-For the full release gate, start the app first and then run:
+Runtime release gate against an already running built runtime:
 
 ```powershell
-npm run check:rc
+npm run check:rc:runtime -- --base-url http://127.0.0.1:3100
 ```
 
-`check:rc` now runs three layers in order:
+Full RC flow:
 
-1. static release config check via `npm run check:launch-config`
-2. runtime health gate via `npm run check:system:ready`
-3. build and live database validation
+1. `npm run check:rc:static`
+2. start the freshly built runtime with `npm run start -- --hostname 127.0.0.1 --port 3100`
+3. `npm run check:rc:runtime -- --base-url http://127.0.0.1:3100`
 
-Mock mode is never release-ready.
+`npm run check:rc` runs the static gate first and then requires an explicit runtime URL.
+It does not silently probe a random previously running dev server.
+
+Mock mode is never release-ready, even if the HTTP endpoint is reachable.
 
 ## Documentation
 
@@ -146,6 +156,7 @@ Mock mode is never release-ready.
 
 `/api/system/health` now returns these core fields:
 
+- `ok`: endpoint and the minimum runtime health contract are available
 - `status`: `ok`, `warn`, or `error`
 - `mode`: `live`, `mock`, `degraded`, or `misconfigured`
 - `ready`: `true` only for release-ready live mode
@@ -156,10 +167,18 @@ Mock mode is never release-ready.
 
 Health mode semantics:
 
-- `live`: real configuration is present, live database is healthy, Telegram launch prerequisites are configured, and `ready` is `true`
-- `mock`: BOSE is reachable but using mock or fallback data; `ready` is `false`
-- `degraded`: some runtime parts work, but a required dependency or launch prerequisite is failing; `ready` is `false`
-- `misconfigured`: required core configuration is missing; `ready` is `false`
+- `live`: real configuration is present, live database is healthy, Telegram launch prerequisites are configured, `ok: true`, `ready: true`
+- `mock`: BOSE is reachable but using mock or fallback data, `ok: true`, `ready: false`
+- `degraded`: the endpoint is up but a required runtime dependency or launch prerequisite is failing; `ready: false`
+- `misconfigured`: required core configuration is missing; `ok: false`, `ready: false`
+
+HTTP contract for `/api/system/health`:
+
+- `live` with `ready: true` returns HTTP `200`
+- `mock` returns HTTP `503`
+- `degraded` returns HTTP `503`
+- `misconfigured` returns HTTP `503`
+- an internal health-check failure returns HTTP `500`
 
 ## Release posture
 

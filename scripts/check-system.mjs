@@ -1,5 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { getSystemHealthHttpStatus } from "../lib/system-health-core.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,11 +15,13 @@ const REQUIRED_ROUTES = [
 
 function parseArgs(argv) {
   const options = new Map();
+  const positionals = [];
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
 
     if (!argument.startsWith("--")) {
+      positionals.push(argument);
       continue;
     }
 
@@ -38,6 +41,10 @@ function parseArgs(argv) {
     options.set(flag, true);
   }
 
+  if (!options.has("--base-url") && positionals.length > 0) {
+    options.set("--base-url", positionals[0]);
+  }
+
   return options;
 }
 
@@ -48,11 +55,25 @@ function parseTimeout(value, fallback) {
 
 function normalizeBaseUrl(value) {
   const fallback = "http://127.0.0.1:3000";
+
   if (typeof value !== "string" || !value.trim()) {
     return fallback;
   }
 
   return value.trim().replace(/\/+$/, "");
+}
+
+function sanitizeUrlForLogs(value) {
+  try {
+    const url = new URL(value);
+    url.username = "";
+    url.password = "";
+    url.hash = "";
+    url.search = "";
+    return url.toString();
+  } catch {
+    return String(value || "").replace(/\/\/[^@/]+@/, "//");
+  }
 }
 
 function createRequestOptions(timeoutMs) {
@@ -77,19 +98,24 @@ async function fetchResponse(url, timeoutMs) {
   }
 }
 
-async function fetchJson(url, timeoutMs) {
+async function fetchHealth(url, timeoutMs) {
   const response = await fetchResponse(url, timeoutMs);
-  const body = await response.text();
+  const bodyText = await response.text();
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} for ${url}`);
+  let payload = null;
+
+  if (bodyText.trim()) {
+    try {
+      payload = JSON.parse(bodyText);
+    } catch (error) {
+      throw new Error(`Malformed JSON from ${sanitizeUrlForLogs(url)}: ${error.message}`);
+    }
   }
 
-  try {
-    return JSON.parse(body);
-  } catch (error) {
-    throw new Error(`Malformed JSON from ${url}: ${error.message}`);
-  }
+  return {
+    httpStatus: response.status,
+    payload
+  };
 }
 
 function isRuntimeUnavailable(error) {
@@ -107,10 +133,11 @@ function isRuntimeUnavailable(error) {
   );
 }
 
-function printNextRunHint() {
-  console.error("Run the BOSE app first:");
+function printNextRunHint(baseUrl) {
+  console.error("Run the BOSE runtime first:");
   console.error(`  cd "${repoRoot}"`);
-  console.error("  npm run dev");
+  console.error("  npm run start -- --hostname 127.0.0.1 --port 3000");
+  console.error(`  npm run check:rc:runtime -- --base-url ${baseUrl}`);
 }
 
 function validateHealthPayload(payload) {
@@ -119,6 +146,10 @@ function validateHealthPayload(payload) {
   if (!payload || typeof payload !== "object") {
     issues.push("Health response is not a JSON object.");
     return issues;
+  }
+
+  if (typeof payload.ok !== "boolean") {
+    issues.push("Field ok must be a boolean.");
   }
 
   if (typeof payload.ready !== "boolean") {
@@ -152,12 +183,28 @@ function validateHealthPayload(payload) {
   return issues;
 }
 
+function printHealthWarnings(health) {
+  for (const warning of health.warnings) {
+    console.log(`WARNING ${warning}`);
+  }
+}
+
+function failHealth(httpStatus, health, healthUrl) {
+  const expectedHttpStatus = getSystemHealthHttpStatus(health);
+
+  console.error(
+    `SYSTEM_ERR Health is not ready at ${sanitizeUrlForLogs(healthUrl)} (http=${httpStatus}, expected=${expectedHttpStatus}, status=${health.status}, mode=${health.mode}, ok=${health.ok}, ready=${health.ready}).`
+  );
+  printHealthWarnings(health);
+  process.exitCode = 1;
+}
+
 async function checkRoute(baseUrl, route, timeoutMs) {
   const url = `${baseUrl}${route.path}`;
   const response = await fetchResponse(url, timeoutMs);
 
   if (!response.ok) {
-    throw new Error(`HTTP ${response.status} for ${url}`);
+    throw new Error(`HTTP ${response.status} for ${sanitizeUrlForLogs(url)}`);
   }
 }
 
@@ -168,15 +215,15 @@ async function main() {
   const baseUrl = normalizeBaseUrl(options.get("--base-url") || process.env.APP_BASE_URL);
   const healthUrl = `${baseUrl}/api/system/health`;
 
-  let health;
+  let healthResponse;
 
   try {
-    health = await fetchJson(healthUrl, timeoutMs);
+    healthResponse = await fetchHealth(healthUrl, timeoutMs);
   } catch (error) {
     if (isRuntimeUnavailable(error)) {
-      console.error(`SYSTEM_ERR Runtime is unavailable at ${baseUrl}.`);
+      console.error(`SYSTEM_ERR Runtime is unavailable at ${sanitizeUrlForLogs(baseUrl)}.`);
       console.error(`Reason: ${error.message}`);
-      printNextRunHint();
+      printNextRunHint(sanitizeUrlForLogs(baseUrl));
       process.exitCode = 1;
       return;
     }
@@ -186,7 +233,9 @@ async function main() {
     return;
   }
 
+  const health = healthResponse.payload;
   const validationIssues = validateHealthPayload(health);
+
   if (validationIssues.length > 0) {
     console.error("SYSTEM_ERR Health response failed validation:");
     for (const issue of validationIssues) {
@@ -197,27 +246,43 @@ async function main() {
   }
 
   console.log(
-    `HEALTH status=${health.status} mode=${health.mode} ready=${health.ready} endpoint=${healthUrl}`
+    `HEALTH http=${healthResponse.httpStatus} status=${health.status} mode=${health.mode} ok=${health.ok} ready=${health.ready} endpoint=${sanitizeUrlForLogs(healthUrl)}`
   );
 
-  if (health.warnings.length > 0) {
-    for (const warning of health.warnings) {
-      console.log(`WARNING ${warning}`);
-    }
+  const expectedHttpStatus = getSystemHealthHttpStatus(health);
+  const runtimeReady =
+    healthResponse.httpStatus === 200 &&
+    expectedHttpStatus === 200 &&
+    health.ready === true &&
+    health.mode === "live" &&
+    health.status === "ok";
+
+  if (healthResponse.httpStatus !== expectedHttpStatus) {
+    console.error(
+      `SYSTEM_ERR Health endpoint returned unexpected HTTP status ${healthResponse.httpStatus}; expected ${expectedHttpStatus} for mode=${health.mode}.`
+    );
+    printHealthWarnings(health);
+    process.exitCode = 1;
+    return;
   }
 
-  if (requireReady) {
-    const readyForRelease =
-      health.ready === true && health.mode === "live" && health.status === "ok";
+  if (healthResponse.httpStatus !== 200) {
+    failHealth(healthResponse.httpStatus, health, healthUrl);
+    return;
+  }
 
-    if (!readyForRelease) {
-      console.error(
-        `SYSTEM_ERR Release gate failed because health is not ready (status=${health.status}, mode=${health.mode}, ready=${health.ready}).`
-      );
-      printNextRunHint();
-      process.exitCode = 1;
-      return;
-    }
+  if (requireReady && !runtimeReady) {
+    failHealth(healthResponse.httpStatus, health, healthUrl);
+    return;
+  }
+
+  if (!runtimeReady) {
+    failHealth(healthResponse.httpStatus, health, healthUrl);
+    return;
+  }
+
+  if (health.warnings.length > 0) {
+    printHealthWarnings(health);
   }
 
   try {
