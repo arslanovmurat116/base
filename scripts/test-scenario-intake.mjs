@@ -15,7 +15,7 @@ const {
   handleScenarioDraftPostRequest
 } = await import("../lib/scenario-drafts-api.js");
 
-const workHubRoot = "C:/Users/Мурат Арсланов/Desktop/workhub";
+const workHubRoot = "C:/Users/\u041c\u0443\u0440\u0430\u0442 \u0410\u0440\u0441\u043b\u0430\u043d\u043e\u0432/Desktop/workhub";
 const workHubSchemaPath = path.join(
   workHubRoot,
   "scenario-hub",
@@ -23,6 +23,10 @@ const workHubSchemaPath = path.join(
   "scenario-request.schema.json"
 );
 const workHubSchema = JSON.parse(fs.readFileSync(workHubSchemaPath, "utf8"));
+const telegramControlSource = fs.readFileSync(
+  path.join(process.cwd(), "lib", "telegram-control.js"),
+  "utf8"
+);
 const results = [];
 
 function record(name, passed, details, extra = {}) {
@@ -58,12 +62,14 @@ const draftRecord = {
   telegramUsername: "@owner_signal",
   chatId: "777",
   sessionId: "00000000-0000-0000-0000-000000000001",
-  title: "Обработка заявки клиента",
-  description: "Получить заявку клиента из Telegram, сохранить контакт, создать сделку и уведомить менеджера.",
+  title: "Client lead intake",
+  description:
+    "Receive a client request from Telegram, save the contact, create a deal, and notify the manager.",
   category: "crm",
   targetPlatform: "telegram",
-  constraints: ["Без секретов", "Без реальных платежей"],
-  rawText: "Получить заявку клиента из Telegram, сохранить контакт, создать сделку и уведомить менеджера.",
+  constraints: ["No secrets", "No real payments"],
+  rawText:
+    "Receive a client request from Telegram, save the contact, create a deal, and notify the manager.",
   aiSummary: "Capture the Telegram lead, store the contact, create a deal, and notify the manager.",
   suggestedTrigger: "A client sends a Telegram message.",
   suggestedSteps: ["Capture the message", "Create or update the client", "Create the deal", "Notify the manager"],
@@ -94,10 +100,6 @@ const sessionSnapshot = {
 
 try {
   const launchContract = buildScenarioOrderTelegramReply();
-  const telegramControlSource = fs.readFileSync(
-    path.join("C:/Users/Мурат Арсланов/Desktop/mebel rdn", "lib", "telegram-control.js"),
-    "utf8"
-  );
   record(
     "telegram_scenario_command",
     /command === "scenario"/.test(telegramControlSource) &&
@@ -110,6 +112,21 @@ try {
   );
 } catch (error) {
   record("telegram_scenario_command", false, error.message);
+}
+
+try {
+  record(
+    "telegram_scenario_preview_bypass",
+    Boolean(
+      /VERCEL_AUTOMATION_BYPASS_SECRET/.test(telegramControlSource) &&
+        /x-vercel-protection-bypass/.test(telegramControlSource) &&
+        /x-vercel-set-bypass-cookie/.test(telegramControlSource) &&
+        telegramControlSource.includes('const appUrl = buildAbsoluteAppUrl("/")')
+    ),
+    "Expected the /scenario Mini App button implementation to include the Vercel preview bypass and cookie bootstrap parameters."
+  );
+} catch (error) {
+  record("telegram_scenario_preview_bypass", false, error.message);
 }
 
 let capturedCreatePayload = null;
@@ -247,10 +264,7 @@ try {
   exportPayload = exportResult.body;
   assertSchemaLike(exportPayload, workHubSchema);
 
-  exportFilePath = path.join(
-    os.tmpdir(),
-    `bose-scenario-export-${Date.now()}.json`
-  );
+  exportFilePath = path.join(os.tmpdir(), `bose-scenario-export-${Date.now()}.json`);
   fs.writeFileSync(exportFilePath, JSON.stringify(exportPayload, null, 2), "utf8");
 
   record(

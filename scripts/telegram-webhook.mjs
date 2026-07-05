@@ -2,6 +2,30 @@ import { callTelegramApi, loadTelegramConfig } from "./telegram-common.mjs";
 
 const action = (process.argv[2] || "info").toLowerCase();
 
+function applyVercelProtectionBypass(urlString) {
+  const secret = String(process.env.VERCEL_AUTOMATION_BYPASS_SECRET || "").trim();
+
+  if (!secret) {
+    return urlString;
+  }
+
+  try {
+    const url = new URL(urlString);
+
+    if (!/\.vercel\.app$/i.test(url.hostname)) {
+      return urlString;
+    }
+
+    if (!url.searchParams.has("x-vercel-protection-bypass")) {
+      url.searchParams.set("x-vercel-protection-bypass", secret);
+    }
+
+    return url.toString();
+  } catch {
+    return urlString;
+  }
+}
+
 function getWebhookUrl(baseUrl) {
   try {
     const base = new URL(baseUrl);
@@ -13,9 +37,9 @@ function getWebhookUrl(baseUrl) {
       }
     }
 
-    return webhookUrl.toString();
+    return applyVercelProtectionBypass(webhookUrl.toString());
   } catch {
-    return `${baseUrl.replace(/\/+$/, "")}/api/telegram/webhook`;
+    return applyVercelProtectionBypass(`${baseUrl.replace(/\/+$/, "")}/api/telegram/webhook`);
   }
 }
 
