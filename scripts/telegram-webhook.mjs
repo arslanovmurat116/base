@@ -3,7 +3,20 @@ import { callTelegramApi, loadTelegramConfig } from "./telegram-common.mjs";
 const action = (process.argv[2] || "info").toLowerCase();
 
 function getWebhookUrl(baseUrl) {
-  return `${baseUrl.replace(/\/+$/, "")}/api/telegram/webhook`;
+  try {
+    const base = new URL(baseUrl);
+    const webhookUrl = new URL("/api/telegram/webhook", base);
+
+    for (const [key, value] of base.searchParams.entries()) {
+      if (!webhookUrl.searchParams.has(key)) {
+        webhookUrl.searchParams.append(key, value);
+      }
+    }
+
+    return webhookUrl.toString();
+  } catch {
+    return `${baseUrl.replace(/\/+$/, "")}/api/telegram/webhook`;
+  }
 }
 
 function ensureHttpsUrl(baseUrl) {
