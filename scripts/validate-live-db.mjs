@@ -203,6 +203,13 @@ async function main() {
       `
     );
 
+    await printTable("PROJECT_FILE_VERSIONS", `select count(*)::int as versions,
+      count(*) filter (where is_current)::int as current_files,
+      count(*) filter (where not is_current)::int as archived_files from project_file_versions`);
+    const invalidCurrent = await pool.query(`select company_id, lead_id, group_key from project_file_versions
+      group by company_id, lead_id, group_key having count(*) filter (where is_current) <> 1`);
+    if (invalidCurrent.rowCount) throw new Error("Project file families must have exactly one current version");
+    await printTable("STAFF_PROJECT_REQUESTS", "select count(*)::int as requests from telegram_client_leads where source_ref is not null");
     console.log("\nVALIDATION_OK");
   } finally {
     await pool.end();

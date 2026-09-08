@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "test:projects": "node --experimental-vm-modules --test tests/project-workflow.test.mjs",
     "start": "next start",
     "check:launch-config": "node scripts/check-launch-config.mjs",
     "check:system": "node scripts/check-system.mjs",

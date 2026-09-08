@@ -252,6 +252,8 @@ export default function LeadProjectFilesForm({
         const uploadData = new FormData();
         uploadData.append("action", "project-file-upload");
         uploadData.append("slot", item.row.slotId);
+        uploadData.append("expectedCurrentId", initialProjectAssets.versions?.find((file) => file.groupKey === item.row.slotId && file.isCurrent)?.id || "");
+        uploadData.append("sourceRef", `web:${item.row.id}:${item.file.name}:${item.file.size}:${item.file.lastModified}`);
         uploadData.append("file", item.file);
         uploadData.append("version", version);
         uploadData.append("exportedAt", exportedAt);

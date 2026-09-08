@@ -532,6 +532,20 @@ export default async function LeadDetailPage({ params }) {
 
         <section className="panel lead-section-anchor" id="deal-project-files">
           <SectionHeader eyebrow={pick(lang, "Files", "Файлы")} title={pick(lang, "Project files", "Файлы проекта")} />
+          {projectAssets.versions?.length ? (
+            <article className="summary-card" style={{ marginBottom: 16 }}>
+              <strong>{pick(lang, "Current materials and version history", "Актуальные материалы и история версий")}</strong>
+              <p>{pick(lang, "Check the latest version in the bot before production. Downloaded copies may be outdated.", "Перед изготовлением проверьте актуальную версию в боте. Сохранённая копия может устареть.")}</p>
+              {projectAssets.versions.filter((file) => file.isCurrent).map((file) => (
+                <p key={file.id}>
+                  <strong>{pick(lang, "CURRENT", "АКТУАЛЬНО")} v{file.version}</strong>{" · "}{file.fileName}{" · "}{file.uploadedBy}
+                </p>
+              ))}
+              <a className="ghost-link" href={`https://t.me/bose_business_os_bot?start=project_${resolved.slug}`} target="_blank" rel="noreferrer">
+                {pick(lang, "Open current files and history in Telegram", "Открыть актуальные файлы и историю в Telegram")}
+              </a>
+            </article>
+          ) : null}
           <div className="compact-list">
             {projectFiles.length ? (
               projectFiles.map((item) => (

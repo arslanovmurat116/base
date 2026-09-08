@@ -112,6 +112,8 @@ async function main() {
         { command: "status", description: "Show chat status" },
         { command: "app", description: "Open BOSE workspace" },
         { command: "add", description: "Open bot actions" },
+        { command: "projects", description: "Projects and current files" },
+        { command: "newrequest", description: "New project request" },
         { command: "today", description: "Today summary" },
         { command: "summary", description: "AI daily summary" },
         { command: "control", description: "Control queues" },
