@@ -10,7 +10,7 @@ const REQUIRED_ROUTES = [
   { path: "/" },
   { path: "/dashboard" },
   { path: "/clients" },
-  { path: "/api/auth/session" }
+  { path: "/api/telegram/miniapp/auth" }
 ];
 
 function parseArgs(argv) {
