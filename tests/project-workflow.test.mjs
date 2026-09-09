@@ -76,8 +76,8 @@ test("create, optional phone, edit/cancel and duplicate confirmation", async () 
 
 test("full project PDF/photo flow, second employee, restart, current and history", async () => {
   const h = harness(); const lead = await h.create();
-  await h.press("Добавить файл"); await h.send("", h.editor, h.pdf());
-  const confirm = h.button("Сохранить актуальную версию");
+  await h.press("Добавить файлы"); await h.send("", h.editor, h.pdf());
+  const confirm = h.button("Сохранить пакет (1)");
   await h.click(confirm); await h.click(confirm);
   assert.equal(h.files.length, 1);
   const original = h.files[0];
@@ -102,7 +102,7 @@ test("full project PDF/photo flow, second employee, restart, current and history
   assert.match(h.deliveries.at(-1)[2], /НЕ ДЛЯ ПРОИЗВОДСТВА/);
   await h.click(`fp|photo|${lead.slug}`);
   await h.send("", h.editor, { photo: [{ file_id: "photo-id", file_unique_id: "photo-unique", file_size: 600 }] });
-  await h.press("Сохранить актуальную версию");
+  await h.press("Сохранить пакет (1)");
   assert.equal(h.files.filter((file) => file.isCurrent).length, 2);
   await h.click(`fp|photos|${lead.slug}`, h.viewer);
   assert.match(h.messages.at(-1).markup.inline_keyboard[0][0].text, /photo/);
@@ -112,10 +112,9 @@ test("full project PDF/photo flow, second employee, restart, current and history
 
 test("separate PDF does not supersede drawings; update only changes comment", async () => {
   const h = harness(); const lead = await h.create();
-  await h.press("Добавить файл"); await h.send("", h.editor, h.pdf()); await h.press("Сохранить актуальную версию");
+  await h.press("Добавить файлы"); await h.send("", h.editor, h.pdf()); await h.press("Сохранить пакет (1)");
   const original = h.files[0];
-  await h.press("Добавить файл"); await h.send("", h.editor, h.pdf("contract.pdf"));
-  await h.press("Это отдельный документ"); await h.press("Добавить документ");
+  await h.press("Добавить файлы"); await h.send("", h.editor, h.pdf("contract.pdf")); await h.press("Сохранить пакет (1)");
   assert.equal(original.isCurrent, true);
   assert.equal(h.files.filter((file) => file.isCurrent).length, 2);
   await h.press("Обновить проект"); await h.press("Комментарий к проекту"); await h.send("New comment");
@@ -140,9 +139,23 @@ test("stale forms, group chat, untrusted IDs and viewer writes are rejected", as
 test("image sent as document keeps its Telegram transport type", async () => {
   const h = harness(); await h.create(); await h.press("Добавить фото");
   await h.send("", h.editor, { document: { file_id: "image-as-file", file_unique_id: "image-unique", file_name: "plan.jpg", file_size: 100, mime_type: "image/jpeg" } });
-  await h.press("Сохранить актуальную версию");
+  await h.press("Сохранить пакет (1)");
   assert.equal(h.files[0].kind, "photo");
   assert.equal(h.files[0].telegramMediaType, "document");
+});
+
+test("batch upload saves distinct files and versions same-name materials", async () => {
+  const h = harness(); await h.create();
+  await h.press("Добавить файлы");
+  await h.send("", h.editor, h.pdf("drawing.pdf"));
+  await h.send("", h.editor, h.pdf("contract.pdf"));
+  assert.match(h.messages.at(-1).text, /В пакете: 2/);
+  await h.press("Сохранить пакет (2)");
+  assert.equal(h.files.filter((file) => file.isCurrent).length, 2);
+  await h.press("Добавить файлы"); await h.send("", h.editor, h.pdf("drawing.pdf")); await h.press("Сохранить пакет (1)");
+  assert.equal(h.files.length, 3);
+  assert.equal(h.files.find((file) => file.fileName === "drawing.pdf" && !file.isCurrent).version, 1);
+  assert.equal(h.files.find((file) => file.fileName === "drawing.pdf" && file.isCurrent).version, 2);
 });
 
 test("duplicate user message does not answer the next wizard question", async () => {
