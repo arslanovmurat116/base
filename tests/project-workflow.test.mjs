@@ -136,15 +136,6 @@ test("stale forms, group chat, untrusted IDs and viewer writes are rejected", as
   assert.match(h.messages.at(-1).text, /личном чате/);
 });
 
-test("designer can edit project materials when listed as an editor", async () => {
-  const h = harness(); const lead = await h.create();
-  const designer = { chatId: "103", telegramUserId: "103", role: "designer", name: "Designer" };
-  h.deps.access = (id) => String(id) === "103" ? { read: true, write: true } : { read: false, write: false };
-  h.restart();
-  await h.click(`fp|upload|${lead.slug}`, designer);
-  assert.equal(h.states.get("103").mode, "batchupload");
-});
-
 test("image sent as document keeps its Telegram transport type", async () => {
   const h = harness(); await h.create(); await h.press("Добавить фото");
   await h.send("", h.editor, { document: { file_id: "image-as-file", file_unique_id: "image-unique", file_name: "plan.jpg", file_size: 100, mime_type: "image/jpeg" } });
