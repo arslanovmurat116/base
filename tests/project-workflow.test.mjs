@@ -144,6 +144,23 @@ test("image sent as document keeps its Telegram transport type", async () => {
   assert.equal(h.files[0].telegramMediaType, "document");
 });
 
+test("trusted installer can add project photos without project edit access", async () => {
+  const h = harness(); const lead = await h.create();
+  const installer = { chatId: "103", telegramUserId: "103", role: "installer", name: "Installer" };
+  h.deps.access = (id) => String(id) === installer.telegramUserId
+    ? { read: true, write: false, addPhoto: true }
+    : { read: true, write: true, addPhoto: true };
+  h.restart();
+
+  await h.click(`fp|open|${lead.slug}`, installer);
+  assert.ok(h.button("Добавить фото"));
+  assert.equal(h.button("Добавить файлы"), undefined);
+  await h.press("Добавить фото", installer);
+  await h.send("", installer, { photo: [{ file_id: "installer-photo", file_unique_id: "installer-photo-unique", file_size: 600 }] });
+  await h.press("Сохранить пакет (1)", installer);
+  assert.equal(h.files[0].kind, "photo");
+});
+
 test("batch upload saves distinct files and versions same-name materials", async () => {
   const h = harness(); await h.create();
   await h.press("Добавить файлы");

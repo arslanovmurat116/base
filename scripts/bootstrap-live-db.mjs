@@ -57,7 +57,8 @@ function resolveSqlFiles() {
     "019_bose_bot_scenarios.sql",
     "020_telegram_lifecycle_foundation.sql",
     "021_scenario_drafts.sql",
-    "022_project_file_versions.sql"
+    "022_project_file_versions.sql",
+    "023_secure_staff_roles.sql"
   ];
 
   const withLocalSeed =

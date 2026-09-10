@@ -5,18 +5,11 @@ import {
 } from "../../../../../lib/telegram-control";
 
 function hasValidCronRequest(request) {
-  const expectedSecret = process.env.CRON_SECRET || "";
+  const expectedSecret = String(process.env.CRON_SECRET || "").trim();
   const authHeader = request.headers.get("authorization") || "";
 
-  if (expectedSecret) {
-    return authHeader === `Bearer ${expectedSecret}`;
-  }
-
-  if (process.env.NODE_ENV !== "production") {
-    return true;
-  }
-
-  return String(request.headers.get("user-agent") || "").includes("vercel-cron/1.0");
+  if (!expectedSecret) return process.env.NODE_ENV !== "production";
+  return authHeader === `Bearer ${expectedSecret}`;
 }
 
 function buildUnauthorizedResponse(status = 401) {

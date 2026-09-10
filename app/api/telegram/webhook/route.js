@@ -13,7 +13,7 @@ function hasValidSecret(request) {
   const expectedSecret = getTelegramBotSecretToken();
 
   if (!expectedSecret) {
-    return true;
+    return process.env.NODE_ENV !== "production";
   }
 
   return request.headers.get("x-telegram-bot-api-secret-token") === expectedSecret;

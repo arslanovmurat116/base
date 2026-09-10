@@ -17,7 +17,7 @@ function hasDispatchAuthorization(request) {
     return true;
   }
 
-  const expectedSecret = process.env.CRON_SECRET || "";
+  const expectedSecret = String(process.env.CRON_SECRET || "").trim();
 
   if (!expectedSecret) {
     return false;

@@ -2,9 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { buildOwnerCookieValue, isOwnerIdentity } from "../lib/owner-access";
 
 const SESSION_STORAGE_KEY = "bose-miniapp-session";
+const SERVER_SESSION_STORAGE_KEY = "bose-miniapp-server-session";
 const SCREEN_STORAGE_PREFIX = "bose-screen-view:";
 
 function getTelegramWebApp() {
@@ -43,6 +43,17 @@ function writeStoredSession(value) {
   window.sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(value));
 }
 
+function hasCurrentServerSession(expiresAt) {
+  if (typeof window === "undefined") return false;
+  const storedExpiry = Number(window.sessionStorage.getItem(SERVER_SESSION_STORAGE_KEY) || 0);
+  return storedExpiry > Date.now() && storedExpiry === new Date(expiresAt || 0).getTime();
+}
+
+function markCurrentServerSession(expiresAt) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(SERVER_SESSION_STORAGE_KEY, String(new Date(expiresAt || 0).getTime()));
+}
+
 function shouldTrackScreen(pathname) {
   if (typeof window === "undefined") {
     return false;
@@ -56,14 +67,6 @@ function shouldTrackScreen(pathname) {
 
   window.sessionStorage.setItem(key, "1");
   return true;
-}
-
-function syncOwnerCookie(enabled) {
-  if (typeof document === "undefined") {
-    return;
-  }
-
-  document.cookie = buildOwnerCookieValue(Boolean(enabled));
 }
 
 async function postJson(url, body, options = {}) {
@@ -143,7 +146,7 @@ export default function MiniAppLaunchClient() {
       const expiresAt = existing?.expiresAt ? new Date(existing.expiresAt).getTime() : 0;
       const expired = !expiresAt || expiresAt <= Date.now();
       const unsafeUser = webApp.initDataUnsafe?.user || {};
-      const authResult = existing && !expired
+      const authResult = existing && !expired && hasCurrentServerSession(existing.expiresAt)
         ? { session: existing }
         : await postJson("/api/telegram/miniapp/auth", {
             initData: webApp.initData,
@@ -175,18 +178,8 @@ export default function MiniAppLaunchClient() {
         };
 
         writeStoredSession(sessionPayload);
+        markCurrentServerSession(sessionPayload.expiresAt);
         sessionRef.current = sessionPayload;
-        syncOwnerCookie(
-          Boolean(
-            authResult?.ownerAccess?.isOwner ||
-              isOwnerIdentity({
-                coreRole: authResult?.subject?.role || null,
-                subjectRole: authResult?.subject?.role || null,
-                username: sessionPayload.username,
-                telegramUserId: sessionPayload.telegramUserId
-              })
-          )
-        );
       }
 
       if (shouldTrackScreen(pathname)) {

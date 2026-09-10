@@ -14,6 +14,16 @@ export async function GET(request) {
     );
   }
 
+  if (!pathname.startsWith("project-files/")) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Доступ к этому файлу запрещён"
+      },
+      { status: 403 }
+    );
+  }
+
   if (!isBlobStoreEnabled()) {
     return NextResponse.json(
       {
