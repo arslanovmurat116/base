@@ -1,108 +1,28 @@
-import { NextResponse } from "next/server";
-import { getBoseSessionFromRequest, isStaffRole } from "./lib/security/session-auth";
-
-const OWNER_ONLY_API_PREFIXES = ["/api/admin/", "/api/telegram/dispatch"];
-const PUBLIC_API_PATHS = new Set([
-  "/api/system/health",
-  "/api/telegram/webhook",
-  "/api/telegram/miniapp/auth",
-  "/api/preferences/language"
-]);
-const SESSION_API_PATHS = new Set([
-  "/api/telegram/analytics/track",
-  "/api/telegram/miniapp/session/end",
-  "/api/scenario-drafts"
-]);
-const OWNER_PAGES = ["/owner", "/test", "/debug", "/scenario-drafts"];
-const WORKSPACE_PAGES = ["/dashboard", "/workboard", "/leads", "/clients", "/deals", "/tasks", "/appointments", "/ai"];
-const PROJECT_ONLY_ROLES = new Set(["designer", "production", "installer"]);
-
-function matchesPrefix(pathname, prefixes) {
-  return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-}
-
-function isPublicApi(pathname) {
-  return PUBLIC_API_PATHS.has(pathname) || pathname.startsWith("/api/telegram/cron/");
-}
-
-function apiError(message, status) {
-  return NextResponse.json({ ok: false, message }, { status });
-}
-
-function isProjectSurface(pathname) {
-  return pathname === "/leads" || pathname.startsWith("/leads/") || pathname === "/api/leads" || pathname.startsWith("/api/leads/") || pathname === "/api/blob";
-}
-
+import { NextResponse } from 'next/server';
+import { getBoseSessionFromRequest } from './lib/security/session-server';
+import { routePolicy, canAccessRoute, PROJECT_ONLY_ROLES } from './lib/security/access-policy';
 export async function middleware(request) {
-  const { pathname } = request.nextUrl;
-  const isApi = pathname.startsWith("/api/");
-  const isOwnerPage = matchesPrefix(pathname, OWNER_PAGES);
-  const isWorkspacePage = matchesPrefix(pathname, WORKSPACE_PAGES);
-
-  if (isApi && isPublicApi(pathname)) return NextResponse.next();
-  if (!isApi && !isOwnerPage && !isWorkspacePage) return NextResponse.next();
-
-  const session = await getBoseSessionFromRequest(request);
-  if (!session) {
-    if (isApi) return apiError("Verified Telegram Mini App session is required.", 401);
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    url.searchParams.set("auth", "required");
+  const path = request.nextUrl.pathname;
+  if(path === '/_next/image' && /^\/(project-files|demo-projects)\//.test(request.nextUrl.searchParams.get('url') || '')) return NextResponse.json({ok:false},{status:403});
+  if (routePolicy(path,request.method) === 'public') return NextResponse.next();
+  let session;
+  try { session = await getBoseSessionFromRequest(request); }
+  catch { return NextResponse.json({ok:false,message:'Проверка доступа временно недоступна.'},{status:503,headers:{'Cache-Control':'no-store'}}); }
+  const allowed = canAccessRoute(session,path,request.method);
+  console.info(JSON.stringify({securityEvent:'request_access',path,method:request.method,allowed,actor:session?.telegramUserId||null,role:session?.role||null}));
+  if (!allowed) {
+    if (path.startsWith('/api/') || routePolicy(path,request.method) === 'deny') return NextResponse.json({ok:false,message:'Доступ запрещён.'},{status:session?403:401,headers:{'Cache-Control':'no-store'}});
+    const url = request.nextUrl.clone(); url.pathname = session && PROJECT_ONLY_ROLES.includes(session.role) ? '/projects' : '/';url.search='';url.searchParams.set('auth',session?'forbidden':'required');
     return NextResponse.redirect(url);
   }
-
-  if (isOwnerPage) {
-    if (session.isOwner) return NextResponse.next();
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    url.searchParams.set("auth", "owner-required");
-    return NextResponse.redirect(url);
+  // Fail closed on cross-origin cookie-authenticated mutations.
+  if (!['GET','HEAD','OPTIONS'].includes(request.method)) {
+    const origin = request.headers.get('origin');
+    if ((origin && origin !== request.nextUrl.origin) || request.headers.get('sec-fetch-site') === 'cross-site') return NextResponse.json({ok:false},{status:403});
   }
-
-  if (OWNER_ONLY_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
-    return session.isOwner ? NextResponse.next() : apiError("Owner access is required.", 403);
-  }
-
-  if (isApi && !SESSION_API_PATHS.has(pathname) && !isStaffRole(session.role)) {
-    return apiError("Staff access is required.", 403);
-  }
-
-  if (!isApi && !isOwnerPage && !isStaffRole(session.role)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    url.searchParams.set("auth", "staff-required");
-    return NextResponse.redirect(url);
-  }
-
-  if (PROJECT_ONLY_ROLES.has(session.role) && !isProjectSurface(pathname)) {
-    if (isApi) return apiError("This role has access only to project materials.", 403);
-    const url = request.nextUrl.clone();
-    url.pathname = "/leads";
-    return NextResponse.redirect(url);
-  }
-
-  const isLeadMutation = /^\/api\/leads\/[^/]+$/.test(pathname) && request.method === "PATCH";
-  if (isLeadMutation && !["owner", "manager", "designer"].includes(session.role)) {
-    return apiError("Project edit access is required.", 403);
-  }
-
-  if (
-    (pathname.endsWith("/outcome") || pathname.startsWith("/api/core/")) &&
-    !["owner", "manager"].includes(session.role)
-  ) {
-    return apiError("Manager access is required.", 403);
-  }
-
-  if (
-    ["/api/tasks/complete", "/api/followups/create", "/api/followups/complete"].includes(pathname) &&
-    !["owner", "manager", "operator"].includes(session.role)
-  ) {
-    return apiError("Operations access is required.", 403);
-  }
-
-  return NextResponse.next();
+  const response = NextResponse.next(); response.headers.set('Cache-Control','private, no-store'); return response;
 }
-
 export const config = {
-  matcher: ["/api/:path*", "/dashboard/:path*", "/workboard/:path*", "/leads/:path*", "/clients/:path*", "/deals/:path*", "/tasks/:path*", "/appointments/:path*", "/ai/:path*", "/owner/:path*", "/test/:path*", "/debug/:path*", "/scenario-drafts/:path*"]
+  runtime: 'nodejs',
+  matcher: ['/_next/image','/api/:path*','/projects/:path*','/project-files/:path*','/demo-projects/:path*','/dashboard/:path*','/workboard/:path*','/leads/:path*','/clients/:path*','/deals/:path*','/tasks/:path*','/appointments/:path*','/ai/:path*','/owner/:path*','/test/:path*','/debug/:path*','/scenario-drafts/:path*']
 };

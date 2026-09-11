@@ -1,3 +1,4 @@
+import { getOwnerAccessState } from '../lib/owner-access-server';
 import TrackedLink from "../components/tracked-link";
 import { getBOSEDashboardData } from "../lib/server-data";
 import { getLanguage } from "../lib/i18n-server";
@@ -61,7 +62,8 @@ function localizeMetric(item, lang) {
 
 export default async function HomePage() {
   const lang = await getLanguage();
-  const dashboard = await getBOSEDashboardData();
+  const { session } = await getOwnerAccessState();
+  const dashboard = ['owner','manager'].includes(session?.role) ? await getBOSEDashboardData() : {metrics:[]};
   const isRu = lang === "ru";
   const metrics = dashboard.metrics.slice(0, 6).map((item) => localizeMetric(item, lang));
 

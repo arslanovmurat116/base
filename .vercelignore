@@ -1,0 +1,7 @@
+.env*
+.codex-logs/
+.codex-tmp/
+.mock-state/
+*.log
+*.pid
+.git/

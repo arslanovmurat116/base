@@ -5,7 +5,7 @@ import {
   getMiniAppAuthPlan,
   verifyTelegramMiniAppInitData
 } from "../../../../../lib/telegram/miniapp-auth";
-import { isOwnerIdentity } from "../../../../../lib/owner-access";
+
 import { recordMiniAppLaunch } from "../../../../../lib/telegram/analytics";
 import {
   buildBoseSessionCookie,
@@ -25,7 +25,7 @@ export async function POST(request) {
     const body = await request.json();
     const verification = verifyTelegramMiniAppInitData(body?.initData, {
       botToken: getTelegramBotToken(),
-      maxAgeSeconds: Number(body?.maxAgeSeconds || 3600)
+      maxAgeSeconds: 3600
     });
     const sessionCandidate = buildMiniAppSessionCandidate(verification);
     const launch = verification.verified && sessionCandidate
@@ -33,7 +33,7 @@ export async function POST(request) {
           ...sessionCandidate,
           initDataRaw: body?.initData,
           timestamp: new Date().toISOString(),
-          ttlSeconds: Number(body?.ttlSeconds || 3600),
+          ttlSeconds: 3600,
           platform: body?.platform || verification.chatType || "telegram-miniapp",
           device: body?.device || null,
           telegramVersion: body?.telegramVersion || null,
@@ -49,17 +49,11 @@ export async function POST(request) {
       : null;
     const session = launch?.session || null;
 
-    const ownerAccess = {
-      isOwner: isOwnerIdentity({
-        coreRole: launch?.subject?.role || null,
-        subjectRole: launch?.subject?.role || null,
-        username: launch?.profile?.username || sessionCandidate?.telegramUsername || null,
-        telegramUserId: launch?.profile?.telegramUserId || sessionCandidate?.telegramUserId || null
-      })
-    };
+    const ownerAccess = { isOwner: launch?.subject?.role === 'owner' };
     const authToken = session
       ? await createBoseSessionToken({
           sessionId: session.id,
+          telegramUserId: sessionCandidate.telegramUserId,
           companyId: session.companyId || launch?.profile?.companyId || null,
           subjectType: launch?.subject?.subjectType || session.subjectType,
           subjectId: launch?.subject?.subjectId || session.subjectId,
@@ -78,9 +72,9 @@ export async function POST(request) {
 
     const response = NextResponse.json({
       ok: verification.verified,
-      verification,
+      verification: { verified: verification.verified, reason: verification.reason || null },
       sessionCandidate,
-      session,
+      session: session ? { ...session, sessionToken: undefined, initDataHash: undefined, payload: undefined } : null,
       profile: launch?.profile || null,
       subject: launch?.subject || null,
       ownerAccess,

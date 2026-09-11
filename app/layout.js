@@ -45,7 +45,7 @@ export default async function RootLayout({ children }) {
               </div>
             </Link>
             <Suspense fallback={null}>
-              <TopNav lang={lang} ownerMode={ownerAccess.isOwner} />
+              <TopNav lang={lang} ownerMode={ownerAccess.isOwner} role={ownerAccess.session?.role || null} />
             </Suspense>
           </header>
           {children}

@@ -1,59 +1,34 @@
-import { NextResponse } from "next/server";
-import { getPrivateBlob, isBlobStoreEnabled } from "../../../lib/persistent-store";
-
+import { NextResponse } from 'next/server';
+import { getPrivateBlob, isBlobStoreEnabled } from '../../../lib/persistent-store';
+import { getProjectFile } from '../../../lib/project-files';
+import { query } from '../../../lib/db';
+import { getTelegramBotToken } from '../../../lib/telegram';
+import { getBoseSessionFromRequest } from '../../../lib/security/session-server';
+import { canReadProjectFile } from '../../../lib/security/access-policy';
 export async function GET(request) {
-  const pathname = request.nextUrl.searchParams.get("pathname");
-
-  if (!pathname) {
-    return NextResponse.json(
-      {
-        ok: false,
-        message: "Нужно передать pathname"
-      },
-      { status: 400 }
-    );
+  const session=await getBoseSessionFromRequest(request);
+  if(!session)return NextResponse.json({ok:false},{status:401});
+  const id=request.nextUrl.searchParams.get('fileId');
+  const pathname=request.nextUrl.searchParams.get('pathname');
+  let file=null;
+  if(id && /^[0-9a-f-]{36}$/i.test(id))file=await getProjectFile(id);
+  else if(pathname?.startsWith('project-files/')) {
+    const result=await query('select id from project_file_versions where company_id=$1 and storage_path=$2 order by created_at desc limit 1',[session.companyId,pathname]);
+    if(result.rows[0])file=await getProjectFile(result.rows[0].id);
   }
-
-  if (!pathname.startsWith("project-files/")) {
-    return NextResponse.json(
-      {
-        ok: false,
-        message: "Доступ к этому файлу запрещён"
-      },
-      { status: 403 }
-    );
+  if(!canReadProjectFile(session.role,file))return NextResponse.json({ok:false},{status:403});
+  let stream;
+  if(file.telegramFileId) {
+    const token=getTelegramBotToken();
+    const meta=await fetch('https://api.telegram.org/bot'+token+'/getFile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_id:file.telegramFileId}),cache:'no-store'}).then(r=>r.json());
+    const remote=meta.result?.file_path;
+    if(!meta.ok||!remote||remote.includes('..')||!/^[-a-zA-Z0-9_./]+$/.test(remote))return NextResponse.json({ok:false},{status:404});
+    const response=await fetch('https://api.telegram.org/file/bot'+token+'/'+remote,{cache:'no-store'});
+    if(!response.ok)return NextResponse.json({ok:false},{status:404});
+    stream=response.body;
+  } else if(file.pathname?.startsWith('project-files/') && isBlobStoreEnabled()) {
+    const result=await getPrivateBlob(file.pathname);if(result?.statusCode===200)stream=result.stream;
   }
-
-  if (!isBlobStoreEnabled()) {
-    return NextResponse.json(
-      {
-        ok: false,
-        message: "Blob storage не подключён"
-      },
-      { status: 503 }
-    );
-  }
-
-  const result = await getPrivateBlob(pathname);
-
-  if (!result || result.statusCode !== 200 || !result.stream) {
-    return NextResponse.json(
-      {
-        ok: false,
-        message: "Файл не найден"
-      },
-      { status: 404 }
-    );
-  }
-
-  const fileName = pathname.split("/").pop() || "file";
-
-  return new NextResponse(result.stream, {
-    status: 200,
-    headers: {
-      "Cache-Control": "private, no-cache",
-      "Content-Disposition": `inline; filename="${encodeURIComponent(fileName)}"`,
-      "Content-Type": result.blob?.contentType || "application/octet-stream"
-    }
-  });
+  if(!stream)return NextResponse.json({ok:false},{status:404});
+  return new NextResponse(stream,{headers:{'Cache-Control':'private, no-store','Content-Type':'application/octet-stream','X-Content-Type-Options':'nosniff','Content-Disposition':`attachment; filename*=UTF-8''${encodeURIComponent(file.fileName)}`}});
 }

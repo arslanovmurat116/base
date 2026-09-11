@@ -1,3 +1,4 @@
+import { getBoseSessionFromRequest } from '../../../../lib/security/session-server';
 import { NextResponse } from "next/server";
 import { checkDatabaseHealth } from "../../../../lib/db";
 import { getEnvironmentPublicSummary } from "../../../../lib/env";
@@ -14,8 +15,13 @@ import {
   getSystemHealthHttpStatus
 } from "../../../../lib/system-health-core.mjs";
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const session=await getBoseSessionFromRequest(request);
+    if(session?.role!=='owner') {
+      const database=await checkDatabaseHealth();
+      return NextResponse.json({ok:database.ok,status:database.ok?'ok':'unavailable',release:'BOSE security v2'},{status:database.ok?200:503,headers:{'Cache-Control':'no-store'}});
+    }
     const [databaseStatus, env, launchMetrics] = await Promise.all([
       checkDatabaseHealth(),
       Promise.resolve(getEnvironmentPublicSummary()),

@@ -1,10 +1,10 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-const SESSION_STORAGE_KEY = "bose-miniapp-session";
-const SERVER_SESSION_STORAGE_KEY = "bose-miniapp-server-session";
+const SESSION_STORAGE_KEY = "bose-miniapp-session-v2";
+const SERVER_SESSION_STORAGE_KEY = "bose-miniapp-server-session-v2";
 const SCREEN_STORAGE_PREFIX = "bose-screen-view:";
 
 function getTelegramWebApp() {
@@ -115,6 +115,7 @@ export async function trackMiniAppEvent(eventName, eventPayload = {}, extra = {}
 
 export default function MiniAppLaunchClient() {
   const pathname = usePathname();
+  const router = useRouter();
   const sessionRef = useRef(null);
   const startedAtRef = useRef(Date.now());
 
@@ -146,8 +147,9 @@ export default function MiniAppLaunchClient() {
       const expiresAt = existing?.expiresAt ? new Date(existing.expiresAt).getTime() : 0;
       const expired = !expiresAt || expiresAt <= Date.now();
       const unsafeUser = webApp.initDataUnsafe?.user || {};
-      const authResult = existing && !expired && hasCurrentServerSession(existing.expiresAt)
-        ? { session: existing }
+      const checked = existing && !expired && hasCurrentServerSession(existing.expiresAt) ? await fetch('/api/telegram/miniapp/session',{cache:'no-store'}).then(r=>r.ok).catch(()=>false) : false;
+      const authResult = checked
+        ? { session: {...existing,id:existing.sessionId} }
         : await postJson("/api/telegram/miniapp/auth", {
             initData: webApp.initData,
             screenPath: pathname,
@@ -180,6 +182,7 @@ export default function MiniAppLaunchClient() {
         writeStoredSession(sessionPayload);
         markCurrentServerSession(sessionPayload.expiresAt);
         sessionRef.current = sessionPayload;
+        if(!checked)router.refresh();
       }
 
       if (shouldTrackScreen(pathname)) {

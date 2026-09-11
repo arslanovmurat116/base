@@ -4,9 +4,9 @@ import { usePathname } from "next/navigation";
 import LanguageToggle from "./language-toggle";
 import TrackedLink from "./tracked-link";
 
-export default function TopNav({ lang = "en", ownerMode = false }) {
+export default function TopNav({ lang = "en", ownerMode = false, role = null }) {
   const pathname = usePathname();
-  const navItems = [
+  const allItems = [
     { href: "/", label: lang === "ru" ? "Главная" : "Home" },
     { href: "/dashboard", label: lang === "ru" ? "Панель" : "Dashboard" },
     { href: "/clients", label: lang === "ru" ? "Клиенты" : "Clients" },
@@ -16,6 +16,7 @@ export default function TopNav({ lang = "en", ownerMode = false }) {
     { href: "/pricing", label: lang === "ru" ? "Тарифы" : "Pricing" }
   ];
 
+  const navItems = ['owner','manager'].includes(role) ? allItems : role && role !== 'client' ? [{href:'/projects',label:lang==='ru'?'Проекты':'Projects'}] : allItems.filter(item=>['/','/pricing'].includes(item.href));
   if (ownerMode) {
     navItems.push({
       href: "/owner",

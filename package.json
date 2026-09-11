@@ -23,7 +23,8 @@
     "telegram:webhook:delete": "node scripts/telegram-webhook.mjs delete",
     "telegram:me": "node scripts/telegram-webhook.mjs me",
     "telegram:commands:set": "node scripts/telegram-webhook.mjs commands",
-    "cleanup:demo-state": "node scripts/cleanup-demo-state.mjs"
+    "cleanup:demo-state": "node scripts/cleanup-demo-state.mjs",
+    "test:rbac": "node --experimental-vm-modules --test tests/security-session.test.mjs tests/security-rbac.test.mjs tests/project-workflow.test.mjs tests/installer-upload.test.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.4.0",

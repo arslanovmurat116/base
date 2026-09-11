@@ -58,7 +58,9 @@ function resolveSqlFiles() {
     "020_telegram_lifecycle_foundation.sql",
     "021_scenario_drafts.sql",
     "022_project_file_versions.sql",
-    "023_secure_staff_roles.sql"
+    "023_secure_staff_roles.sql",
+    "024_production_team.sql",
+    "025_authoritative_auth.sql"
   ];
 
   const withLocalSeed =

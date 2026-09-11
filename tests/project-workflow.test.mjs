@@ -98,7 +98,9 @@ test("full project PDF/photo flow, second employee, restart, current and history
   await h.click(`fp|history|${lead.slug}`, h.viewer);
   await h.click(`fp|archive|${original.id}`, h.viewer);
   assert.equal(h.deliveries.length, delivered + 1, "archive requires confirmation");
-  await h.press("Открыть архив для сравнения", h.viewer);
+  assert.equal(h.button("Открыть архив для сравнения"), undefined, "viewer cannot read archived production instructions");
+  await h.click(`fp|archive|${original.id}`, h.editor);
+  await h.press("Открыть архив для сравнения", h.editor);
   assert.match(h.deliveries.at(-1)[2], /НЕ ДЛЯ ПРОИЗВОДСТВА/);
   await h.click(`fp|photo|${lead.slug}`);
   await h.send("", h.editor, { photo: [{ file_id: "photo-id", file_unique_id: "photo-unique", file_size: 600 }] });
